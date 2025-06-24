@@ -15,6 +15,16 @@ SECTIONS {
 
     .data ALIGN (0x1000) :   /* align at 4 KB */
     {
+        /*
+            The .init_array segment contains the constructors of global objects,
+            which have to be called at the beginning of the kernel program.
+            We make it available in C++ with this section.
+        */
+        start_ctors = .;
+        KEEP(*( .init_array ));
+        KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
+        end_ctors = .;
+
         *(.data)             /* all data sections from all files */
     }
 

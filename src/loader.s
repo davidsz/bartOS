@@ -1,5 +1,7 @@
 global loader                   ; the entry symbol for ELF
 extern kernel_main              ; entry function is defined elsewhere
+extern call_constructors        ; this function will call all ctors of global objects
+                                ; before kernel_main
 
 MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
 FLAGS        equ 0x0            ; multiboot flags
@@ -15,7 +17,8 @@ align 4                         ; the code must be 4 byte aligned
     dd CHECKSUM                 ; and the checksum
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, kernel_stack       ; point esp to the start of the stack (end of memory area)
-    call kernel_main            ; call the function, the result will be in eax
+    call call_constructors      ; call the function in C++
+    call kernel_main            ; call the function in C++, the result will be in eax
 
 
 section .bss:

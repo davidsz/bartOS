@@ -9,10 +9,10 @@ LDFLAGS  := -T link.ld -melf_i386
 AS       := nasm
 ASFLAGS  := -f elf32
 
-LOADER   := $(SRCDIR)/loader.s
+ASSES    := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/**/*.s)
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
 OBJECTS  := $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(SOURCES)) \
-			$(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%.o,$(LOADER))
+			$(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%.o,$(ASSES))
 
 all: $(ISO)
 
@@ -30,14 +30,13 @@ $(ISO): kernel.elf
 kernel.elf: $(OBJECTS)
 	ld $(LDFLAGS) $(OBJECTS) -o $(BUILDDIR)/kernel.elf
 
-$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp build
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILDDIR)/%.o: $(SRCDIR)/%.s build
+$(BUILDDIR)/%.o: $(SRCDIR)/%.s
+	mkdir -p $(@D)
 	$(AS) $(ASFLAGS) $< -o $@
-
-build:
-	mkdir -p $(BUILDDIR)
 
 clean:
 	rm -rf $(BUILDDIR)/*
