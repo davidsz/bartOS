@@ -41,9 +41,6 @@ _start:
 	// Set up a stack before calling functions
 	mov $stack_top, %esp
 
-	// Do everything necessary before stepping into kernel_main in C++
-	call call_constructors
-
 	// Enter the high-level kernel.
 	call kernel_main
 

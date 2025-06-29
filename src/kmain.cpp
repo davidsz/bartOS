@@ -1,3 +1,4 @@
+#include "common/gdt.h"
 #include "io/console.h"
 
 
@@ -18,8 +19,7 @@
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
-// (called by loader.s)
-extern "C" void call_constructors()
+void call_constructors()
 {
     for (constructor *i = &start_ctors; i != &end_ctors; i++)
         (*i)();
@@ -30,6 +30,10 @@ extern "C" void call_constructors()
 // (called by loader.s)
 extern "C" int kernel_main()
 {
+    call_constructors();
+
+    common::setup_gdt();
+
     io::set_console_color(io::ConsoleColor::Blue, io::ConsoleColor::White);
     io::console_clear();
     io::console_print("bartOS raises");

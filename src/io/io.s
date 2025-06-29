@@ -9,5 +9,5 @@ stack: 8(%esp) the data byte
 outb:
     movb 8(%esp), %al   // move the data to be sent into the al register
     movw 4(%esp), %dx   // move the address of the I/O port into the dx register
-    out %al, %dx         // send the data to the I/O port
-    ret                  // return to the calling function
+    out %al, %dx        // send the data to the I/O port
+    ret                 // return to the calling function
