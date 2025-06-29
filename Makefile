@@ -2,17 +2,17 @@ SRCDIR   := src
 BUILDDIR := build
 ISO      := $(BUILDDIR)/bartos.iso
 
-CC       := g++
-CFLAGS   := -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
-            -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c
-LDFLAGS  := -T link.ld -melf_i386
-AS       := nasm
-ASFLAGS  := -f elf32
+CC       := i686-elf-g++
+CFLAGS   := -c -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti
+LD       := i686-elf-g++
+LDFLAGS  := -T link.ld -ffreestanding -nostdlib -lgcc
+AS       := i686-elf-as
+ASFLAGS  :=
 
 ASSES    := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/**/*.s)
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
-OBJECTS  := $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(SOURCES)) \
-			$(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%.o,$(ASSES))
+OBJECTS  := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%.o,$(ASSES)) \
+			$(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(SOURCES))
 
 all: $(ISO)
 
@@ -28,7 +28,7 @@ $(ISO): kernel.elf
 		$(BUILDDIR)/iso
 
 kernel.elf: $(OBJECTS)
-	ld $(LDFLAGS) $(OBJECTS) -o $(BUILDDIR)/kernel.elf
+	$(LD) $(LDFLAGS) $(OBJECTS) -o $(BUILDDIR)/kernel.elf
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 	mkdir -p $(@D)

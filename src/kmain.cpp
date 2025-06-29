@@ -1,5 +1,17 @@
 #include "io/console.h"
 
+
+// Check if the compiler thinks you are targeting the wrong operating system.
+#if defined(__linux__)
+#error "You are not using a cross-compiler, you will most certainly run into trouble"
+#endif
+
+// Work only for the 32-bit ix86 targets
+#if !defined(__i386__)
+#error "This kernel needs to be compiled with a ix86-elf compiler"
+#endif
+
+
 // Call all constructors of global objects. Without this, static objects
 // in the global scope just won't work.
 // (start_ctors and end_ctors are defined in the linker script)
@@ -20,9 +32,7 @@ extern "C" int kernel_main()
 {
     io::set_console_color(io::ConsoleColor::Blue, io::ConsoleColor::White);
     io::console_clear();
-    char msg[] = "bartOS raises";
-    io::console_print(msg);
+    io::console_print("bartOS raises");
 
-    while(true);
     return 0;
 }
