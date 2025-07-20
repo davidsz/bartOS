@@ -1,16 +1,21 @@
-.globl flush_gdt
-.type flush_gdt, @function
+; void flush_gdt(GdtPointer *gdt_ptr);
+; stack layout (cdecl):
+;   [esp+4]  = gdt_ptr (GdtPointer *)
+global flush_gdt
 
+section .text
 flush_gdt:
-    mov 4(%esp), %eax
-    lgdt (%eax)                 # Load GDT
+    mov eax, [esp+4]
+    lgdt [eax]            ; load GDTR
 
-    movw $0x10, %ax             # 0x10: offset of data segment selector
-    movw %ax, %ds
-    movw %ax, %es
-    movw %ax, %fs
-    movw %ax, %gs
-    movw %ax, %ss
-    ljmp $0x08, $flush_cs       # Far jump to set CS
+    mov ax, 0x10          ; 0x10 = data segment selector
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
+    ; Perform a far jump to flush the CS register
+    jmp 0x08:flush_cs     ; (0x08) = code segment selector
 flush_cs:
     ret

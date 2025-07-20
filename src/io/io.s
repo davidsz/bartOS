@@ -1,13 +1,12 @@
-.globl outb
+; void outb(unsigned short port, unsigned char data);
+; stack layout (cdecl):
+;   [esp+4]  = port (unsigned short)
+;   [esp+8]  = value (unsigned char)
+global outb
 
-/*
-outb - send a byte to an I/O port
-stack: 8(%esp) the data byte
-       4(%esp) the I/O port
-       %esp    return address
-*/
+section .text
 outb:
-    movb 8(%esp), %al   // move the data to be sent into the al register
-    movw 4(%esp), %dx   // move the address of the I/O port into the dx register
-    out %al, %dx        // send the data to the I/O port
-    ret                 // return to the calling function
+    mov al, [esp+8]   ; A küldendő byte -> AL
+    mov dx, [esp+4]   ; I/O port címe -> DX
+    out dx, al        ; Küldjük a byte-ot a megadott port-ra
+    ret

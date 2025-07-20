@@ -2,7 +2,7 @@ FROM ubuntu:latest
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get -y install \
-    build-essential \
+    build-essential nasm \
     grub2 mkisofs \
     git curl bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo libisl-dev gcc-multilib g++-multilib
 

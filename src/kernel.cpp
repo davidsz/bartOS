@@ -38,5 +38,7 @@ extern "C" int kernel_main()
     io::console_clear();
     io::console_print("bartOS raises");
 
+    while (true);
+
     return 0;
 }
