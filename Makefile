@@ -1,6 +1,8 @@
 SRCDIR   := src
 BUILDDIR := build
 ISO      := $(BUILDDIR)/bartos.iso
+BOOTSRC  := bootloader
+RAWIMG   := $(BUILDDIR)/bartos.bin
 
 CC       := i686-elf-g++
 CFLAGS   := -c -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti
@@ -14,11 +16,13 @@ SOURCES  := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
 OBJECTS  := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%_s.o,$(ASSES)) \
 			$(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%_cpp.o,$(SOURCES))
 
-all: $(ISO)
+all: $(ISO) $(RAWIMG)
+boot-grub: $(ISO)
+boot-custom: $(RAWIMG)
 
 $(ISO): kernel.elf
 	cp -R iso $(BUILDDIR)/iso
-	mv $(BUILDDIR)/kernel.elf $(BUILDDIR)/iso/boot/kernel.elf
+	cp $(BUILDDIR)/kernel.elf $(BUILDDIR)/iso/boot/kernel.elf
 	mkisofs -R                                                  \
 		-b boot/grub/stage2_eltorito                            \
 		-no-emul-boot                                           \
@@ -26,6 +30,14 @@ $(ISO): kernel.elf
 		-boot-info-table                                        \
 		-o $(ISO)                                               \
 		$(BUILDDIR)/iso
+
+$(RAWIMG): kernel.elf bootloader.bin
+	dd if=$(BUILDDIR)/bootloader.bin >> $(RAWIMG)
+	dd if=$(BUILDDIR)/kernel.elf >> $(RAWIMG)
+	dd if=/dev/zero bs=1048576 count=16 >> $(RAWIMG)
+
+bootloader.bin: $(BOOTSRC)/bootloader.s
+	$(AS) -f bin $(BOOTSRC)/bootloader.s -o $(BUILDDIR)/bootloader.bin
 
 kernel.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o $(BUILDDIR)/kernel.elf

@@ -1,3 +1,4 @@
+[BITS 32]
 global _start           ; Make the entry point visible to the linker
 extern kernel_main      ; Function is defined elsewhere
 

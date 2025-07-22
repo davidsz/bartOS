@@ -27,7 +27,7 @@ void call_constructors()
 
 // extern "C": Using C-style linking keeps the function name unmodified;
 // otherwise C++ extends the name and we can't call it from assembly.
-// (called by loader.s)
+// (called by kernel.s)
 extern "C" int kernel_main()
 {
     call_constructors();
