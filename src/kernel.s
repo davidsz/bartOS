@@ -16,6 +16,7 @@ align 4
     dd MAGIC
     dd FLAGS
     dd CHECKSUM
+    ; TODO: Add more fields here
 
 ; The stack grows downwards on x86. We create a 16 KiB stack and ensure
 ; 16-byte alignment as required by the System V ABI.

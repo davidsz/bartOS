@@ -30,24 +30,25 @@ $(CD_IMG): kernel.elf
 		-no-emul-boot                                           \
 		-boot-load-size 4                                       \
 		-boot-info-table                                        \
-		-o $(CD_IMG)                                               \
+		-o $(CD_IMG)                                            \
 		$(BUILDDIR)/iso
 
 kernel.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o $(BUILDDIR)/kernel.elf
 
-$(HD_IMG): kernel.bin bootloader.bin
+$(HD_IMG): kernel.bin kernel.elf bootloader.bin
 	rm -rf $(HD_IMG)
+#   The bootloader is already padded to 512 bytes, 1 sector
 	dd if=$(BUILDDIR)/bootloader.bin >> $(HD_IMG)
-	dd if=$(BUILDDIR)/kernel.bin >> $(HD_IMG)
+#	dd if=$(BUILDDIR)/kernel.bin >> $(HD_IMG)
+	dd if=$(BUILDDIR)/kernel.elf >> $(HD_IMG)
 	dd if=/dev/zero bs=512 count=100 >> $(HD_IMG)
 
 bootloader.bin: $(BOOTSRC)/bootloader.s
-	$(AS) -f bin $(BOOTSRC)/bootloader.s -o $(BUILDDIR)/bootloader.bin
+	nasm -f bin $(BOOTSRC)/bootloader.s -o $(BUILDDIR)/bootloader.bin
 
 kernel.bin: $(OBJECTS)
-	$(LD) -g -relocatable $(OBJECTS) -o $(BUILDDIR)/kernelfull.o
-	$(CC) -g -T link_bin.ld $(CFLAGS) $(BUILDDIR)/kernelfull.o -o $(BUILDDIR)/kernel.bin
+	$(LD) -T link_bin.ld $(OBJECTS) -o $(BUILDDIR)/kernel.bin
 
 $(BUILDDIR)/%_cpp.o: $(SRCDIR)/%.cpp
 	mkdir -p $(@D)
