@@ -22,7 +22,7 @@ all: $(CD_IMG) $(HD_IMG)
 boot-grub: $(CD_IMG)
 boot-custom: $(HD_IMG)
 
-$(CD_IMG): kernel.elf
+$(CD_IMG): kernel.elf kernel.bin
 	cp -R iso $(BUILDDIR)/iso
 	cp $(BUILDDIR)/kernel.elf $(BUILDDIR)/iso/boot/kernel.elf
 	mkisofs -R                                                  \
@@ -40,8 +40,8 @@ $(HD_IMG): kernel.bin kernel.elf bootloader.bin
 	rm -rf $(HD_IMG)
 #   The bootloader is already padded to 512 bytes, 1 sector
 	dd if=$(BUILDDIR)/bootloader.bin >> $(HD_IMG)
-#	dd if=$(BUILDDIR)/kernel.bin >> $(HD_IMG)
-	dd if=$(BUILDDIR)/kernel.elf >> $(HD_IMG)
+	dd if=$(BUILDDIR)/kernel.bin >> $(HD_IMG)
+#	dd if=$(BUILDDIR)/kernel.elf >> $(HD_IMG)
 	dd if=/dev/zero bs=512 count=100 >> $(HD_IMG)
 
 bootloader.bin: $(BOOTSRC)/bootloader.s

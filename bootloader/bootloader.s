@@ -4,12 +4,14 @@
 [BITS 16]
 
 KERNEL_LOAD_ADDR    equ 0x00100000     ; Load the kernel to this address
-ELF_HEADER_ADDR     equ 0x00080000     ; Load the first sector of the ELF file here
+KERNEL_HEADER_ADDR  equ 0x00080000     ; Load the first sector of the ELF file or Multiboot header here
 SECTOR_SIZE         equ 512            ; bytes
 KERNEL_DISC_OFFSET  equ SECTOR_SIZE    ; The kernel starts from the second sector
+MB_MAGIC            equ 0x1BADB002     ; Magic constant; helps to validate the Multiboot header
+MB_FLAG_ADDR        equ (1 << 16)      ; Flag: load address fields of the Multiboot header are valid
 
-CODE_SEG equ gdt_code - gdt_start
-DATA_SEG equ gdt_data - gdt_start
+CODE_SEG            equ gdt_code - gdt_start
+DATA_SEG            equ gdt_data - gdt_start
 
 
 ; Reserve the first 36 bytes for the BIOS Parameter Block
@@ -99,39 +101,66 @@ start_protected:
 
     ; Load the kernel from disk to memory
     ; First we read the ELF header, only one sector
-    mov eax, 1               ; LBA (Logical Block Address); the kernel starts from the second sector
-    mov ecx, 1               ; Number of sectors to read
-    mov edi, ELF_HEADER_ADDR ; Destination address (at 1Mb)
-    call ata_lba_read        ; Call the routine (EAX, ECX, EDI)
+    mov eax, 1                  ; LBA (Logical Block Address); the kernel starts from the second sector
+    mov ecx, 1                  ; Number of sectors to read
+    mov edi, KERNEL_HEADER_ADDR ; Destination address (at 1Mb)
+    call ata_lba_read           ; Call the routine (EAX, ECX, EDI)
     ; We verify that the loaded sector is an ELF header
-    mov eax, dword [edi]  ; Let's look into the content of the loaded sector
-    cmp eax, 0x464C457F ; ELF magic constant: 'F', 'L', 'E', 0x7F
+    mov eax, dword [edi]        ; Let's look into the content of the loaded sector
+    cmp eax, 0x464C457F         ; ELF magic constant: 'F', 'L', 'E', 0x7F
     jne kernel_not_elf
 
     mov esi, edi       ; ELF header address
     mov ebx, dword [esi + 0x1C]   ; e_phoff (program header offset)
-    add ebx, ELF_HEADER_ADDR  ; Absolute address of the first program header
-    movzx edx, word [esi + 0x2A] ; e_phentsize (program header size)
+    add ebx, KERNEL_HEADER_ADDR   ; Absolute address of the first program header
+    movzx edx, word [esi + 0x2A]  ; e_phentsize (program header size)
     movzx ecx, word [esi + 0x2C]  ; e_phnum (number of program headers/segments)
 
 .next_ph:
-    mov eax, [ebx + 0x00]                ; p_type is at the beginning of PH
-    cmp eax, 1              ; 1 = PT_LOAD; we have to load the segment
+    mov eax, [ebx + 0x00]         ; p_type is at the beginning of PH
+    cmp eax, 1                    ; 1 = PT_LOAD; we have to load the segment
     jne .skip_ph
-    call load_segment                    ; Load the segment (IN: EBX)
+    call load_segment             ; Load the segment (IN: EBX)
 .skip_ph:
-    add ebx, edx     ; Next PH = PH address + PH size
-    loop .next_ph    ; Decrease ECX and repeat
+    add ebx, edx                  ; Next PH = PH address + PH size
+    loop .next_ph                 ; Decrease ECX and repeat
 
-    mov eax, dword [ELF_HEADER_ADDR + 0x18] ; e_entry
-    jmp eax      ; Call the entry point of the loaded ELF
+    mov eax, dword [KERNEL_HEADER_ADDR + 0x18] ; e_entry
+    jmp eax                       ; Call the entry point of the loaded ELF
 
 kernel_not_elf:
-    mov eax, 1                ; LBA (Logical Block Address); the kernel starts from the second sector
-    mov ecx, 100              ; Number of sectors to read
-    mov edi, KERNEL_LOAD_ADDR ; Destination address (at 1Mb)
-    call ata_lba_read         ; Call the routine (EAX, ECX, EDI)
-    jmp CODE_SEG:KERNEL_LOAD_ADDR   ; Jump to the loaded kernel
+    ; Kernel is probably a raw binary file, it header is somewhere in the first 8192 bytes
+    ; TODO: Load only the Multiboot header, validate and load it properly
+    mov eax, 1                    ; LBA (Logical Block Address); the kernel starts from the second sector
+    mov ecx, 100                  ; Number of sectors to read
+    mov edi, KERNEL_LOAD_ADDR     ; Destination address (at 1Mb)
+    call ata_lba_read             ; Call the routine (EAX, ECX, EDI)
+
+    mov esi, KERNEL_LOAD_ADDR
+    mov ecx, 8192 / 4             ; We iterate the first 8192 bytes by dwords
+.next_dword:
+    mov eax, [esi]
+    cmp eax, MB_MAGIC             ; Check if we ran into the magic constants
+    jne .no_match
+    mov ebx, [esi + 4]            ; Flags
+    mov edx, [esi + 8]            ; Checksum
+    mov eax, MB_MAGIC
+    add eax, ebx
+    add eax, edx
+    jnz .no_match                 ; Checksum is not valid if MB_MAGIC + Flags + Checksum != 0
+
+    test ebx, MB_FLAG_ADDR
+    jz .no_entry_found            ; The flags indicate that no entry point is provided
+
+    mov eax, [esi + 0x1C]         ; entry_addr
+    jmp eax                       ; Enter kernel at entry_addr
+
+.no_match:
+    add esi, 4
+    loop .next_dword
+
+.no_entry_found:
+    jmp CODE_SEG:KERNEL_LOAD_ADDR ; Fallback: start the kernel simply at the beginning
 
 ; Read a segment from the ELF file into memory
 ; IN: ebx = Program header address
@@ -141,20 +170,7 @@ load_segment:
     mov esi, ebx                ; Program header address
     mov eax, [esi + 0x04]       ; p_offset (file offset)
     mov ecx, [esi + 0x10]       ; p_filesz (Bytes to read)
-
-    ; Calculate the number of sectors to read
-    ; Number of sectors = (p_filesz + (SECTOR_SIZE - 1)) / SECTOR_SIZE
-    push eax                     ; Backup p_offset
-    push ecx                     ; Backup p_filesz
-    xor edx, edx                         ; Null out EDX for division
-    mov ebx, SECTOR_SIZE      ; Divisor
-    add ecx, ebx              ; p_filesz + SECTOR_SIZE
-    dec ecx                   ; p_filesz + SECTOR_SIZE - 1
-    mov eax, ecx
-    div ebx             ; EAX = EDX:EAX / EBX; EDX = remainder
-    mov ebx, eax        ; Result: ebx = number of sectors to read
-    pop ecx
-    pop eax
+    call bytes_to_sectors       ; Calculate the number of sectors to read (in: ECX, out: EBX)
 
     ; Read EBX sectors from EAX offset
     push eax                       ; Backup p_offset
@@ -168,19 +184,19 @@ load_segment:
     pop eax
 
     ; Padding with zero
-    add edi, ecx                         ; Start zeroing here: p_vaddr + p_filesz
-    mov edx, [esi + 0x14]                ; p_memsz (Memory size allocated for the segment)
-    sub edx, ecx                         ; Amount of zeros: edx = p_memsz - p_filesz
+    add edi, ecx                   ; Start zeroing here: p_vaddr + p_filesz
+    mov edx, [esi + 0x14]          ; p_memsz (Memory size allocated for the segment)
+    sub edx, ecx                   ; Amount of zeros: edx = p_memsz - p_filesz
     jbe .done
-    xor eax, eax                         ; Null byte
+    xor eax, eax                   ; Null byte
 .fill_zero:
-    stosb                ; Writes AL to [EDI], then increments EDI
+    stosb                          ; Writes AL to [EDI], then increments EDI
     dec edx
-    jnz .fill_zero       ; Repeat until EDX is zero
+    jnz .fill_zero                 ; Repeat until EDX is zero
 
 .done:
     popa
-    ret                  ; End of load_segment routine
+    ret                            ; End of load_segment routine
 
 ; Using the ATA controller to read sectors from the hard drive, addressed by Logical Block Address
 ; IN: eax - Logical Block Address of the starting poin
@@ -248,6 +264,27 @@ ata_lba_read:
 
     popa
     ret                  ; End of the ata_lba_read routine
+
+; Calculate the number of sectors to read
+; Number of sectors = (bytes + (SECTOR_SIZE - 1)) / SECTOR_SIZE
+; IN: ecx = Number of bytes
+bytes_to_sectors:
+    push eax
+    push ecx
+    push edx
+
+    xor edx, edx                 ; Null out EDX for division
+    mov ebx, SECTOR_SIZE         ; Divisor
+    add ecx, ebx                 ; bytes + SECTOR_SIZE
+    dec ecx                      ; bytes + SECTOR_SIZE - 1
+    mov eax, ecx
+    div ebx                      ; EAX = EDX:EAX / EBX; EDX = remainder
+    mov ebx, eax                 ; Result: ebx = number of sectors to read
+
+    pop edx
+    pop ecx
+    pop eax
+    ret                          ; End of the bytes_to_sectors routine
 
 ; Pad the rest of the space with zeros
 times 510-($ - $$) db 0

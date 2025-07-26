@@ -7,8 +7,7 @@ SECTIONS
     . = 1M;
     .text :
     {
-        /* TODO: The custom bootloader should handle this
-           (.multiboot) */
+        *(.multiboot)
         *(.text)
     }
 
