@@ -34,7 +34,7 @@ step2:
     mov sp, 0x7c00
     sti ; critical section ends (set interrupt flag)
 
-.load_protected:
+    ; Start switching to protected mode
     ; Disable interrupts. The interrupt vector of real mode starts from 0x0000:0x0000,
     ; which is not a valid address in protected mode, so an incoming interrupt could cause
     ; a fault. We can enable them again after setting a new Interrupt Descriptor Table.
@@ -129,15 +129,15 @@ start_protected:
     jmp eax                       ; Call the entry point of the loaded ELF
 
 kernel_not_elf:
-    ; Kernel is probably a raw binary file, it header is somewhere in the first 8192 bytes
-    ; TODO: Load only the Multiboot header, validate and load it properly
+    ; Kernel is probably a raw binary file, its header is somewhere in the first 8192 bytes
+    ; Load only the Multiboot header, validate and load it properly
     mov eax, 1                    ; LBA (Logical Block Address); the kernel starts from the second sector
-    mov ecx, 100                  ; Number of sectors to read
-    mov edi, KERNEL_LOAD_ADDR     ; Destination address (at 1Mb)
+    mov ecx, 16                   ; Read only 8192 bytes
+    mov edi, KERNEL_HEADER_ADDR
     call ata_lba_read             ; Call the routine (EAX, ECX, EDI)
 
-    mov esi, KERNEL_LOAD_ADDR
-    mov ecx, 8192 / 4             ; We iterate the first 8192 bytes by dwords
+    mov esi, KERNEL_HEADER_ADDR
+    mov ecx, 8192 / 4             ; We iterate on the 8192 bytes by dwords
 .next_dword:
     mov eax, [esi]
     cmp eax, MB_MAGIC             ; Check if we ran into the magic constants
@@ -152,6 +152,17 @@ kernel_not_elf:
     test ebx, MB_FLAG_ADDR
     jz .no_entry_found            ; The flags indicate that no entry point is provided
 
+    ; We found a kernel with a valid multiboot header
+    ; Unfortunately here we ran out of the 512 byte sectors size of a simple bootloader.
+    ; TODO: Continue implementing the multiboot rules when motivated to implement a multi stage bootloader
+    ;  - The multiboot header addresses the segments to load
+    ;  - The CPU should be in a predefined state when entering the kernel
+    ;  - Determine the start of the kernel file on the disk, and its size
+    ;    or at least use constants to make it easier to configure
+    mov eax, 1                    ; LBA (Logical Block Address); the kernel starts from the second sector
+    mov ecx, 100
+    mov edi, KERNEL_LOAD_ADDR     ; Destination address (at 1Mb)
+    call ata_lba_read             ; Call the routine (EAX, ECX, EDI)
     mov eax, [esi + 0x1C]         ; entry_addr
     jmp eax                       ; Enter kernel at entry_addr
 
@@ -160,7 +171,12 @@ kernel_not_elf:
     loop .next_dword
 
 .no_entry_found:
-    jmp CODE_SEG:KERNEL_LOAD_ADDR ; Fallback: start the kernel simply at the beginning
+    ; Fallback: Start the kernel simply at the beginning
+    mov eax, 1                      ; LBA (Logical Block Address); the kernel starts from the second sector
+    mov ecx, 100
+    mov edi, KERNEL_LOAD_ADDR       ; Destination address (at 1Mb)
+    call ata_lba_read               ; Call the routine (EAX, ECX, EDI)
+    jmp CODE_SEG:KERNEL_LOAD_ADDR
 
 ; Read a segment from the ELF file into memory
 ; IN: ebx = Program header address
@@ -184,22 +200,17 @@ load_segment:
     pop eax
 
     ; Padding with zero
-    add edi, ecx                   ; Start zeroing here: p_vaddr + p_filesz
-    mov edx, [esi + 0x14]          ; p_memsz (Memory size allocated for the segment)
-    sub edx, ecx                   ; Amount of zeros: edx = p_memsz - p_filesz
-    jbe .done
-    xor eax, eax                   ; Null byte
-.fill_zero:
-    stosb                          ; Writes AL to [EDI], then increments EDI
-    dec edx
-    jnz .fill_zero                 ; Repeat until EDX is zero
+    mov esi, [esi + 0x14]          ; p_memsz (Memory size allocated for the segment)
+    add esi, edi                   ; End padding here: p_vaddr + p_memsz
+    add edi, ecx                   ; Start padding here: p_vaddr + p_filesz
+    call zero_memory               ; Call routine (IN: edi, esi)
 
 .done:
     popa
     ret                            ; End of load_segment routine
 
 ; Using the ATA controller to read sectors from the hard drive, addressed by Logical Block Address
-; IN: eax - Logical Block Address of the starting poin
+; IN: eax - Logical Block Address of the starting point
 ;     ecx - Number of sectors to read
 ;     edi - Destination address to load
 ata_lba_read:
@@ -267,7 +278,8 @@ ata_lba_read:
 
 ; Calculate the number of sectors to read
 ; Number of sectors = (bytes + (SECTOR_SIZE - 1)) / SECTOR_SIZE
-; IN: ecx = Number of bytes
+; IN:  ecx = Number of bytes
+; OUT: ebx = Number of sectors
 bytes_to_sectors:
     push eax
     push ecx
@@ -285,6 +297,21 @@ bytes_to_sectors:
     pop ecx
     pop eax
     ret                          ; End of the bytes_to_sectors routine
+
+; Fill memory with zeros
+; IN: edi = Start address
+;     esi = End address
+zero_memory:
+    pusha
+    cld                         ; Clear Direction Flag; EDI will increase
+    xor eax, eax                ; Null out EAX
+    mov ecx, esi
+    sub ecx, edi                ; Number of bytes to zero
+    jbe .done_zeroing
+    rep stosb                   ; Writes ECX number of zeros from [EDI]
+.done_zeroing:
+    popa
+    ret                         ; End of the zero_memory routine
 
 ; Pad the rest of the space with zeros
 times 510-($ - $$) db 0
