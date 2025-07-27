@@ -1,13 +1,16 @@
-/* Hopefully this file is only temporary. */
-
 ENTRY(_start)
 OUTPUT_FORMAT(binary)
 SECTIONS
 {
     . = 1M;
-    .text :
+
+    .multiboot :
     {
         *(.multiboot)
+    }
+
+    .text :
+    {
         *(.text)
     }
 

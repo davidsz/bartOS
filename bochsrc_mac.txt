@@ -1,9 +1,0 @@
-megs:            32
-display_library: sdl2
-romimage:        file=/opt/homebrew/share/bochs/BIOS-bochs-latest
-vgaromimage:     file=/opt/homebrew/share/bochs/VGABIOS-lgpl-latest.bin
-ata0-master:     type=cdrom, path=build/bartos.iso, status=inserted
-boot:            cdrom
-log:             /dev/null
-clock:           sync=realtime, time0=local
-cpu:             count=1, ips=1000000

@@ -1,54 +1,28 @@
 SRCDIR   := src
 BUILDDIR := build
-# CD-ROM with GRUB included
-CD_IMG   := $(BUILDDIR)/bartos.iso
 BOOTSRC  := bootloader
-# Hard disk image with the custom bootloader
-HD_IMG   := $(BUILDDIR)/bartos.bin
 
 AS       := nasm
 ASFLAGS  := -g -f elf32
 CC       := i686-elf-g++
 CFLAGS   := -g -O0 -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
 LD       := i686-elf-ld
-LDFLAGS  := -T link.ld
 
 ASSES    := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/**/*.s)
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
 OBJECTS  := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%_s.o,$(ASSES)) \
 			$(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%_cpp.o,$(SOURCES))
 
-all: $(CD_IMG) $(HD_IMG)
-boot-grub: $(CD_IMG)
-boot-custom: $(HD_IMG)
-
-$(CD_IMG): kernel.elf kernel.bin
-	cp -R iso $(BUILDDIR)/iso
-	cp $(BUILDDIR)/kernel.elf $(BUILDDIR)/iso/boot/kernel.elf
-	mkisofs -R                                                  \
-		-b boot/grub/stage2_eltorito                            \
-		-no-emul-boot                                           \
-		-boot-load-size 4                                       \
-		-boot-info-table                                        \
-		-o $(CD_IMG)                                            \
-		$(BUILDDIR)/iso
+all: kernel.elf kernel.bin bootloader.bin
 
 kernel.elf: $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $(BUILDDIR)/kernel.elf
-
-$(HD_IMG): kernel.bin kernel.elf bootloader.bin
-	rm -rf $(HD_IMG)
-#   The bootloader is already padded to 512 bytes, 1 sector
-	dd if=$(BUILDDIR)/bootloader.bin >> $(HD_IMG)
-	dd if=$(BUILDDIR)/kernel.bin >> $(HD_IMG)
-#	dd if=$(BUILDDIR)/kernel.elf >> $(HD_IMG)
-	dd if=/dev/zero bs=512 count=100 >> $(HD_IMG)
-
-bootloader.bin: $(BOOTSRC)/bootloader.s
-	nasm -f bin $(BOOTSRC)/bootloader.s -o $(BUILDDIR)/bootloader.bin
+	$(LD) -T link_elf.ld $(OBJECTS) -o $(BUILDDIR)/kernel.elf
 
 kernel.bin: $(OBJECTS)
 	$(LD) -T link_bin.ld $(OBJECTS) -o $(BUILDDIR)/kernel.bin
+
+bootloader.bin: $(BOOTSRC)/bootloader.s
+	nasm -f bin $(BOOTSRC)/bootloader.s -o $(BUILDDIR)/bootloader.bin
 
 $(BUILDDIR)/%_cpp.o: $(SRCDIR)/%.cpp
 	mkdir -p $(@D)
