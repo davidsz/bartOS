@@ -55,7 +55,7 @@ void add_segment_descriptor(unsigned short i, unsigned long long base, unsigned 
     s_gdt[i] = desc;
 }
 
-namespace common {
+namespace core {
 
 void setup_gdt()
 {

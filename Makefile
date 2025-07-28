@@ -5,7 +5,7 @@ BOOTSRC  := bootloader
 AS       := nasm
 ASFLAGS  := -g -f elf32
 CC       := i686-elf-g++
-CFLAGS   := -g -O0 -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
+CFLAGS   := -g -O0 -Isrc -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
 LD       := i686-elf-ld
 
 ASSES    := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/**/*.s)

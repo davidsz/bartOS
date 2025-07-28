@@ -1,15 +1,14 @@
 #include "console.h"
-#include "io.h"
+#include "core/io.h"
 
 
 class FrameBuffer
 {
 public:
-    void WriteCell(unsigned int i, char c,
-                   io::ConsoleColor fg = io::ConsoleColor::Undefined,
-                   io::ConsoleColor bg = io::ConsoleColor::Undefined);
+    void Print(const char *msg);
+    void WriteCell(unsigned int i, char c);
     void MoveCursor(unsigned short x, unsigned short y);
-    void SetConsoleColor(io::ConsoleColor fg, io::ConsoleColor bg);
+    void SetConsoleColor(console::Color fg, console::Color bg);
     void Clear();
 
 private:
@@ -36,30 +35,37 @@ private:
     unsigned short m_y = 0;
 
     // Current console colors
-    io::ConsoleColor m_fgColor = io::White;
-    io::ConsoleColor m_bgColor = io::Black;
+    console::Color m_fgColor = console::Color::White;
+    console::Color m_bgColor = console::Color::Black;
 };
 
 static FrameBuffer s_frameBuffer;
 
-/*
- *  @param i   Index in the framebuffer array
- *  @param c   The character
- *  @param fg  Foreground color
- *  @param bg  Background color
- */
-void FrameBuffer::WriteCell(unsigned int i, char c, io::ConsoleColor fg, io::ConsoleColor bg)
+void FrameBuffer::Print(const char *msg)
+{
+    int x = m_x;
+    int y = m_y;
+    for (int i = 0; msg[i] != '\0'; i++) {
+        if (msg[i] == '\n') {
+            x = 0;
+            y++;
+            continue;
+        }
+        s_frameBuffer.WriteCell(y * m_width + x, msg[i]);
+        x++;
+    }
+    s_frameBuffer.MoveCursor(x, y);
+}
+
+void FrameBuffer::WriteCell(unsigned int i, char c)
 {
     // Format of framebuffer cells:
     // |__char__||_fg_||_bg_||__char__||_fg_||_bg_|...
     // | 1 byte ||  1 byte  || 1 byte ||  1 byte  |...
 
-    fg = fg == io::ConsoleColor::Undefined ? m_fgColor : fg;
-    bg = bg == io::ConsoleColor::Undefined ? m_bgColor : bg;
-
     i *= 2;
     m_frameBufferPtr[i] = c;
-    m_frameBufferPtr[i + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F);
+    m_frameBufferPtr[i + 1] = ((m_fgColor & 0x0F) << 4) | (m_bgColor & 0x0F);
 }
 
 void FrameBuffer::MoveCursor(unsigned short x, unsigned short y)
@@ -71,13 +77,13 @@ void FrameBuffer::MoveCursor(unsigned short x, unsigned short y)
     m_y = y;
 
     int pos = y * m_width + x;
-    io::outb(Port::Command, PortCommand::HighByte);
-    io::outb(Port::Data,    ((pos >> 8) & 0x00FF));
-    io::outb(Port::Command, PortCommand::LowByte);
-    io::outb(Port::Data,    pos & 0x00FF);
+    core::outb(Port::Command, PortCommand::HighByte);
+    core::outb(Port::Data,    ((pos >> 8) & 0x00FF));
+    core::outb(Port::Command, PortCommand::LowByte);
+    core::outb(Port::Data,    pos & 0x00FF);
 }
 
-void FrameBuffer::SetConsoleColor(io::ConsoleColor fg, io::ConsoleColor bg)
+void FrameBuffer::SetConsoleColor(console::Color fg, console::Color bg)
 {
     m_fgColor = fg;
     m_bgColor = bg;
@@ -90,15 +96,11 @@ void FrameBuffer::Clear()
     MoveCursor(0, 0);
 }
 
-namespace io {
+namespace console {
 
-void console_print(const char *msg)
+void print(const char *msg)
 {
-    int i = 0;
-    for (; msg[i] != '\0'; i++)
-        s_frameBuffer.WriteCell(i, msg[i]);
-
-    s_frameBuffer.MoveCursor(i, 0);
+    s_frameBuffer.Print(msg);
 }
 
 void move_cursor(unsigned short x, unsigned short y)
@@ -106,14 +108,14 @@ void move_cursor(unsigned short x, unsigned short y)
     s_frameBuffer.MoveCursor(x, y);
 }
 
-void set_console_color(ConsoleColor fg, ConsoleColor bg)
+void set_color(Color fg, Color bg)
 {
     s_frameBuffer.SetConsoleColor(fg, bg);
 }
 
-void console_clear()
+void clear()
 {
     s_frameBuffer.Clear();
 }
 
-}; // namespace io
+}; // namespace console

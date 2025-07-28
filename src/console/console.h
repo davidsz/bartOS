@@ -1,13 +1,12 @@
-#ifndef IO_CONSOLE_H
-#define IO_CONSOLE_H
+#ifndef CONSOLE_CONSOLE_H
+#define CONSOLE_CONSOLE_H
 
 // "Console" handles the framebuffer, a 80*25 sized memory-mapped output device
 
-namespace io {
+namespace console {
 
 // Matches framebuffer colors
-enum ConsoleColor : short int {
-    Undefined = -1,
+enum Color : short int {
     Black = 0,
     Blue,
     Green,
@@ -26,12 +25,11 @@ enum ConsoleColor : short int {
     White
 };
 
-void console_print(const char *msg);
+void print(const char *msg);
 void move_cursor(unsigned short x, unsigned short y);
-// void scroll_screen(unsigned int lines);
-void set_console_color(ConsoleColor fg, ConsoleColor bg);
-void console_clear();
+void set_color(Color fg, Color bg);
+void clear();
 
-}; // namespace io
+}; // namespace console
 
-#endif // IO_CONSOLE_H
+#endif // CONSOLE_CONSOLE_H

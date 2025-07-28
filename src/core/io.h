@@ -1,7 +1,7 @@
-#ifndef IO_IO_H
-#define IO_IO_H
+#ifndef CORE_IO_H
+#define CORE_IO_H
 
-namespace io {
+namespace core {
 
 /*
 *  Sends the given data to the given I/O port. Defined in io.s
@@ -13,4 +13,4 @@ extern "C" void outb(unsigned short port, unsigned char data);
 
 };
 
-#endif // IO_IO_H
+#endif // CORE_IO_H

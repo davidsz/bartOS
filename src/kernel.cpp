@@ -1,5 +1,5 @@
-#include "common/gdt.h"
-#include "io/console.h"
+#include "core/gdt.h"
+#include "console/console.h"
 
 
 // Check if the compiler thinks you are targeting the wrong operating system.
@@ -32,11 +32,12 @@ extern "C" int kernel_main()
 {
     call_constructors();
 
-    common::setup_gdt();
+    core::setup_gdt();
 
-    io::set_console_color(io::ConsoleColor::Blue, io::ConsoleColor::White);
-    io::console_clear();
-    io::console_print("bartOS raises");
+    console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
+    console::clear();
+    console::print("bartOS raises\n\n");
+    console::print("Technically it's still nothing.\n");
 
     while (true);
 
