@@ -1,24 +1,25 @@
 #include "gdt.h"
 
+#include <stdint.h>
 
 // The GdtPointer is used to indicate the place of the GDT in memory
 struct GdtPointer
 {
-    unsigned short size;
-    unsigned int address;
-} __attribute__ ((packed));
+    uint16_t size;
+    uint32_t address;
+} __attribute__((packed));
 
 // Each descriptor represents a segment in memory
 struct SegmentDescriptor
 {
-    unsigned short limit_low;
-    unsigned short base_low;
-    unsigned char base_middle;
-    unsigned char access;
-    unsigned char limit_high : 4;
-    unsigned char flags : 4;
-    unsigned char base_high;
-} __attribute__ ((packed));
+    uint16_t limit_low;
+    uint16_t base_low;
+    uint8_t base_middle;
+    uint8_t access;
+    uint8_t limit_high : 4;
+    uint8_t flags : 4;
+    uint8_t base_high;
+} __attribute__((packed));
 
 // GDT is basically an array of segment descriptors
 const int s_gdtSize = 3;
@@ -33,7 +34,7 @@ GdtPointer s_gdtPointer;
 */
 extern "C" void flush_gdt(const GdtPointer *);
 
-void add_segment_descriptor(unsigned short i, unsigned long long base, unsigned long long limit, unsigned char access)
+void add_segment_descriptor(uint8_t i, uint32_t base, uint32_t limit, uint8_t access)
 {
     SegmentDescriptor desc;
 
@@ -72,8 +73,8 @@ void setup_gdt()
 
     // Tell the system where GDT is and reload segment registers
     s_gdtPointer.size = sizeof(SegmentDescriptor) * s_gdtSize;
-    s_gdtPointer.address = (unsigned int)s_gdt;
+    s_gdtPointer.address = (uint32_t)s_gdt;
     flush_gdt(&s_gdtPointer);
 }
 
-}; // namespace common
+}; // namespace core

@@ -5,11 +5,11 @@ BOOTSRC  := bootloader
 AS       := nasm
 ASFLAGS  := -g -f elf32
 CC       := i686-elf-g++
-CFLAGS   := -g -O0 -Isrc -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
+CFLAGS   := -g -O0 -Isrc -Isrc/core/lib -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
 LD       := i686-elf-ld
 
-ASSES    := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/**/*.s)
-SOURCES  := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
+ASSES    := $(shell find $(SRCDIR) -name '*.s')
+SOURCES  := $(shell find $(SRCDIR) -name '*.cpp')
 OBJECTS  := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%_s.o,$(ASSES)) \
 			$(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%_cpp.o,$(SOURCES))
 

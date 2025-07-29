@@ -1,4 +1,5 @@
 #include "core/gdt.h"
+#include "core/idt.h"
 #include "console/console.h"
 
 
@@ -33,6 +34,7 @@ extern "C" int kernel_main()
     call_constructors();
 
     core::setup_gdt();
+    core::setup_idt();
 
     console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
     console::clear();

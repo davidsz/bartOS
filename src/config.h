@@ -1,0 +1,9 @@
+#ifndef OS_CONFIG_H
+#define OS_CONFIG_H
+
+#define KERNEL_CODE_SELECTOR 0x08
+#define KERNEL_DATA_SELECTOR 0x10
+
+#define TOTAL_INTERRUPTS 512
+
+#endif // OS_CONFIG_H
