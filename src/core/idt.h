@@ -6,6 +6,8 @@
 namespace core {
 
 void setup_idt();
+extern "C" void enable_interrupts();
+extern "C" void disable_interrupts();
 
 }; // namespace core
 

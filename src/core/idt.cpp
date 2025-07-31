@@ -1,9 +1,18 @@
 #include "idt.h"
 
 #include "config.h"
+#include "io.h"
 #include "memory.h"
 #include <stdint.h>
 
+#include "console/console.h"
+
+#define PIC1          0x20   // Master PIC
+#define PIC2          0xA0   // Slave PIC
+#define PIC1_COMMAND  0x20
+#define PIC1_DATA     0x21
+#define PIC2_COMMAND  0xA0
+#define PIC2_DATA     0xA1
 
 // The IdtPointer is used to indicate the place of the IDT in memory
 struct IdtPointer
@@ -22,12 +31,12 @@ struct InterruptDescriptor32
     uint16_t offset_high;   // Offset bits 16 - 31
 } __attribute__((packed));
 
-InterruptDescriptor32 s_idt[TOTAL_INTERRUPTS];
+__attribute__((aligned(16))) InterruptDescriptor32 s_idt[TOTAL_INTERRUPTS];
 IdtPointer s_idtPointer;
 
 /*
 *  Loads the IDT
-*  Defined in idt_load.s
+*  Defined in idt.s
 *
 *  @param IdtPointer filled with address and size
 */
@@ -59,17 +68,58 @@ void add_interrupt_descriptor(uint8_t i, void *address)
     s_idt[i] = desc;
 }
 
+void remap_pics()
+{
+    core::outb(PIC1_COMMAND, 0x11); // Init
+    core::outb(PIC2_COMMAND, 0x11);
+
+    core::outb(PIC1_DATA, 0x20);    // Interrupt 0x20 (32) is where the ISRs start
+    core::outb(PIC2_DATA, 0x28);    // Start from 0x28 (40)
+
+    core::outb(PIC1_DATA, 0x04);    // Tell Master PIC about Slave PIC at IRQ2
+    core::outb(PIC2_DATA, 0x02);    // Tell Slave PIC its cascade identity
+
+    core::outb(PIC1_DATA, 0x01);    // 8086 mode
+    core::outb(PIC2_DATA, 0x01);
+
+    core::outb(PIC1_DATA, 0x0);     // Restore original masks
+    core::outb(PIC2_DATA, 0x0);
+}
+
 namespace core {
 
-// TODO: Don't leave this here
+// TODO: Don't leave these here
 void idt_zero() { }
+
+extern "C" void int21h();
+extern "C" void int21h_handler()
+{
+    console::print("Keyboard pressed!\n");
+    core::outb(0x20, 0x20); // Tell the PIC that the interrupt is handled
+}
+
+extern "C" void no_interrupt();
+extern "C" void no_interrupt_handler()
+{
+    core::outb(0x20, 0x20); // Tell the PIC that the interrupt is handled
+}
 
 void setup_idt()
 {
-    // Null the whole IDT out
-    memset(s_idt, 0, sizeof(s_idt));
+    // The IDT can have up to 256 entries.
+    // 0-31:    Reserved for CPU exceptions
+    // 8-15:    IRQs from PIC1 -> We map them to 32-39 to eliminate collisions
+    // 112-119: IRQs from PIC2 -> We map them to 40-47 for the sake of order
+    remap_pics();
 
+    // Null the whole IDT out and fill with empty handlers
+    memset(s_idt, 0, sizeof(s_idt));
+    for (int i = 0; i < TOTAL_INTERRUPTS; i++)
+        add_interrupt_descriptor(i, (void *)no_interrupt);
+
+    // Add an entry for example to handle divide by zero
     add_interrupt_descriptor(0, (void *)idt_zero);
+    add_interrupt_descriptor(0x21, (void *)int21h);
 
     // Tell the system where IDT is
     s_idtPointer.size = sizeof(s_idt) - 1; // The -1 comes from the IDT specs

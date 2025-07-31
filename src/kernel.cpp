@@ -33,8 +33,14 @@ extern "C" int kernel_main()
 {
     call_constructors();
 
+    // Global Descriptor Table
     core::setup_gdt();
+
+    // Interrupt Descriptor Table
     core::setup_idt();
+    // Interrupts were potentionally disabled by the bootloader
+    // since the beginning of protected mode. It's safe to enable them again.
+    core::enable_interrupts();
 
     console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
     console::clear();
