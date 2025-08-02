@@ -84,7 +84,7 @@ if [[ "$DISC_FORMAT" == "cd" ]]; then
 	echo "Image is done: $CD_IMG"
 elif [[ "$DISC_FORMAT" == "hd" ]]; then
     rm -rf "$HD_IMG"
-	dd if=$BUILDDIR/bootloader.bin >> "$HD_IMG"
+	dd if=$BUILDDIR/bootloader/bootloader.bin >> "$HD_IMG"
 	dd if=$KERNEL_FILE >> "$HD_IMG"
 	dd if=/dev/zero bs=512 count=100 >> "$HD_IMG"
 	echo "Image is done: $HD_IMG"

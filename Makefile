@@ -1,34 +1,59 @@
-SRCDIR   := src
-BUILDDIR := build
-BOOTSRC  := bootloader
+BUILDDIR      := build
+KERNEL_SRC    := kernel
+KERNEL_BUILD  := $(BUILDDIR)/$(KERNEL_SRC)
+BOOT_SRC      := bootloader
+BOOT_BUILD    := $(BUILDDIR)/$(BOOT_SRC)
+LIB_SRC       := lib
+LIB_BUILD     := $(BUILDDIR)/$(LIB_SRC)
+LIB_INCLUDE   := $(LIB_BUILD)/include
+LIB_TARGET    := $(BUILDDIR)/lib.o
 
 AS       := nasm
 ASFLAGS  := -g -f elf32
 CC       := i686-elf-g++
-CFLAGS   := -g -O0 -Isrc -Isrc/core/lib -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
+CFLAGS   := -g -O0 -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
+CC_INCL  := -I$(KERNEL_SRC) -I$(LIB_INCLUDE)
 LD       := i686-elf-ld
-
-ASSES    := $(shell find $(SRCDIR) -name '*.s')
-SOURCES  := $(shell find $(SRCDIR) -name '*.cpp')
-OBJECTS  := $(patsubst $(SRCDIR)/%.s,$(BUILDDIR)/%_s.o,$(ASSES)) \
-			$(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%_cpp.o,$(SOURCES))
 
 all: kernel.elf kernel.bin bootloader.bin
 
-kernel.elf: $(OBJECTS)
-	$(LD) -T link_elf.ld $(OBJECTS) -o $(BUILDDIR)/kernel.elf
+# Lib
+LIB_SOURCES := $(shell find $(LIB_SRC) -name '*.cpp')
+LIB_OBJECTS := $(patsubst $(LIB_SRC)/%.cpp,$(LIB_BUILD)/%_cpp.o,$(LIB_SOURCES))
 
-kernel.bin: $(OBJECTS)
-	$(LD) -T link_bin.ld $(OBJECTS) -o $(BUILDDIR)/kernel.bin
+lib: $(LIB_TARGET)
 
-bootloader.bin: $(BOOTSRC)/bootloader.s
-	nasm -f bin $(BOOTSRC)/bootloader.s -o $(BUILDDIR)/bootloader.bin
+$(LIB_TARGET): $(LIB_OBJECTS)
+	mkdir -p $(LIB_INCLUDE)
+	cp -r $(LIB_SRC)/include/* $(LIB_INCLUDE)
+	$(LD) -r $(LIB_OBJECTS) -o $(LIB_TARGET)
 
-$(BUILDDIR)/%_cpp.o: $(SRCDIR)/%.cpp
-	mkdir -p $(@D)
+$(LIB_BUILD)/%_cpp.o: $(LIB_SRC)/%.cpp
+	mkdir -p $(LIB_BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILDDIR)/%_s.o: $(SRCDIR)/%.s
+# Bootloader
+bootloader.bin: $(BOOT_SRC)/bootloader.s
+	mkdir -p $(BOOT_BUILD)
+	nasm -f bin $(BOOT_SRC)/bootloader.s -o $(BOOT_BUILD)/bootloader.bin
+
+# Kernel
+KERNEL_ASSES    := $(shell find $(KERNEL_SRC) -name '*.s')
+KERNEL_SOURCES  := $(shell find $(KERNEL_SRC) -name '*.cpp')
+KERNEL_OBJECTS  := $(patsubst $(KERNEL_SRC)/%.s,$(KERNEL_BUILD)/%_s.o,$(KERNEL_ASSES)) \
+				   $(patsubst $(KERNEL_SRC)/%.cpp,$(KERNEL_BUILD)/%_cpp.o,$(KERNEL_SOURCES))
+
+kernel.elf: $(KERNEL_OBJECTS)
+	$(LD) -T link_elf.ld $(KERNEL_OBJECTS) $(LIB_TARGET) -o $(BUILDDIR)/kernel.elf
+
+kernel.bin: $(KERNEL_OBJECTS)
+	$(LD) -T link_bin.ld $(KERNEL_OBJECTS) $(LIB_TARGET) -o $(BUILDDIR)/kernel.bin
+
+$(KERNEL_BUILD)/%_cpp.o: $(KERNEL_SRC)/%.cpp $(LIB_TARGET)
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) $(CC_INCL) -c $< -o $@
+
+$(KERNEL_BUILD)/%_s.o: $(KERNEL_SRC)/%.s
 	mkdir -p $(@D)
 	$(AS) $(ASFLAGS) $< -o $@
 
