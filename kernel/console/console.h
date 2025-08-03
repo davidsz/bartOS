@@ -27,7 +27,7 @@ enum Color : short int {
     White
 };
 
-void print(const char *msg);
+void print(const char *msg, ...);
 void move_cursor(unsigned short x, unsigned short y);
 void set_color(Color fg, Color bg);
 void clear();

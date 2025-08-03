@@ -1,11 +1,14 @@
 #include "console.h"
 #include "core/io.h"
+#include "vargs.h"
+#include <stddef.h>
+#include <stdint.h>
 
 class FrameBuffer
 {
 public:
-    void Print(const char *msg);
-    void WriteCell(unsigned int i, char c);
+    void Print(const char *msg, VA_LIST args);
+    void WriteCell(size_t i, char c);
     void MoveCursor(unsigned short x, unsigned short y);
     void SetConsoleColor(console::Color fg, console::Color bg);
     void Clear();
@@ -36,11 +39,16 @@ private:
     // Current console colors
     console::Color m_fgColor = console::Color::White;
     console::Color m_bgColor = console::Color::Black;
+
+    // Write the given type to the console, then return the number
+    // of the characters written
+    int WriteDigits(size_t start, int d);
+    int WriteHex32(size_t start, uint32_t h);
 };
 
 static FrameBuffer s_frameBuffer;
 
-void FrameBuffer::Print(const char *msg)
+void FrameBuffer::Print(const char *msg, VA_LIST args)
 {
     int x = m_x;
     int y = m_y;
@@ -50,13 +58,31 @@ void FrameBuffer::Print(const char *msg)
             y++;
             continue;
         }
-        s_frameBuffer.WriteCell(y * m_width + x, msg[i]);
+        unsigned int pos = y * m_width + x;
+        if (msg[i] == '%' && msg[i + 1] != '\0') {
+            switch(msg[i + 1]) {
+            case 'd': {
+                int d = VA_ARG(args, int);
+                x += WriteDigits(pos, d);
+                i++;
+                continue;
+            }
+            case 'p': {
+                uint32_t h = VA_ARG(args, uint32_t);
+                x += WriteHex32(pos, h);
+                i++;
+                continue;
+            }
+            default: {}
+            }
+        }
+        s_frameBuffer.WriteCell(pos, msg[i]);
         x++;
     }
     s_frameBuffer.MoveCursor(x, y);
 }
 
-void FrameBuffer::WriteCell(unsigned int i, char c)
+void FrameBuffer::WriteCell(size_t i, char c)
 {
     // Format of framebuffer cells:
     // |__char__||_fg_||_bg_||__char__||_fg_||_bg_|...
@@ -95,11 +121,59 @@ void FrameBuffer::Clear()
     MoveCursor(0, 0);
 }
 
+int FrameBuffer::WriteDigits(size_t pos, int d)
+{
+    if (d == 0) {
+        WriteCell(pos, '0');
+        return 1;
+    }
+
+    int count = 0;
+    if (d < 0) {
+        WriteCell(pos, '-');
+        pos++;
+        count++;
+        d = -d;
+    }
+
+    // 32 bit int is 11 digits long maximum
+    const int bufsize = 11;
+    char buf[bufsize];
+    int i = bufsize;
+    while (d > 0 && i > 0) {
+        buf[--i] = (d % 10) + '0';
+        d = d / 10;
+    }
+    while(i < bufsize) {
+        WriteCell(pos, buf[i++]);
+        pos++;
+        count++;
+    }
+
+    return count;
+}
+
+int FrameBuffer::WriteHex32(size_t start, uint32_t h)
+{
+    char res[] = "0x00000000";
+    const char *charset = "0123456789ABCDEF";
+    for (int i = 2, shift = 28; i < 10; i++, shift -= 4)
+        res[i] = charset[(h >> shift) & 0xF];
+    for (int i = 0; i < 10; i++)
+        WriteCell(start + i, res[i]);
+    return 10;
+}
+
 namespace console {
 
-void print(const char *msg)
+void print(const char *msg, ...)
 {
-    s_frameBuffer.Print(msg);
+    VA_LIST args;
+    VA_START(args, msg);
+
+    s_frameBuffer.Print(msg, args);
+
+    VA_END(args);
 }
 
 void move_cursor(unsigned short x, unsigned short y)

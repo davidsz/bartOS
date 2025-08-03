@@ -63,6 +63,8 @@ extern "C" int kernel_main()
         console::print("Failed to initialize the heap allocator.\n");
     set_heap_allocator(&s_allocator);
 
+    console::print("Variadic args test: %d, %p\n\n", -6674, 0x00FF13DD);
+
     // TODO: Implement an exit condition
     while (true);
 
