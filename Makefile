@@ -11,7 +11,7 @@ LIB_TARGET    := $(BUILDDIR)/lib.o
 AS       := nasm
 ASFLAGS  := -g -f elf32
 CC       := i686-elf-g++
-CFLAGS   := -g -O0 -ffreestanding -fno-builtin -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs
+CFLAGS   := -g -O0 -ffreestanding -Wall -Wextra -Werror -fno-builtin -nostdlib -nostartfiles -nodefaultlibs -fno-rtti -fno-exceptions
 CC_INCL  := -I$(KERNEL_SRC) -I$(LIB_INCLUDE)
 LD       := i686-elf-ld
 

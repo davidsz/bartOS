@@ -1,6 +1,8 @@
 #ifndef CONSOLE_CONSOLE_H
 #define CONSOLE_CONSOLE_H
 
+#include <stdint.h>
+
 // "Console" handles the framebuffer, a 80*25 sized memory-mapped output device
 
 namespace console {
@@ -29,6 +31,9 @@ void print(const char *msg);
 void move_cursor(unsigned short x, unsigned short y);
 void set_color(Color fg, Color bg);
 void clear();
+
+// TODO: Support this as a print argument instead of a function
+void print_hex32(uint32_t key);
 
 }; // namespace console
 

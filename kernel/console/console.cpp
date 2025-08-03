@@ -1,7 +1,6 @@
 #include "console.h"
 #include "core/io.h"
 
-
 class FrameBuffer
 {
 public:
@@ -116,6 +115,24 @@ void set_color(Color fg, Color bg)
 void clear()
 {
     s_frameBuffer.Clear();
+}
+
+void printfHex(uint8_t key) {
+    char res[] = "00";
+    const char *charset = "0123456789ABCDEF";
+    res[0] = charset[(key >> 4) & 0xF];
+    res[1] = charset[key & 0xF];
+    print(res);
+}
+
+void print_hex32(uint32_t key)
+{
+    print("0x");
+    printfHex((key >> 24) & 0xFF);
+    printfHex((key >> 16) & 0xFF);
+    printfHex((key >> 8) & 0xFF);
+    printfHex(key & 0xFF);
+    print("\n");
 }
 
 }; // namespace console
