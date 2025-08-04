@@ -61,6 +61,12 @@ void FrameBuffer::Print(const char *msg, VA_LIST args)
         unsigned int pos = y * m_width + x;
         if (msg[i] == '%' && msg[i + 1] != '\0') {
             switch(msg[i + 1]) {
+            case 'c': {
+                s_frameBuffer.WriteCell(pos, VA_ARG(args, char));
+                i++;
+                continue;
+            }
+            case 'i':
             case 'd': {
                 int d = VA_ARG(args, int);
                 x += WriteDigits(pos, d);
@@ -70,6 +76,14 @@ void FrameBuffer::Print(const char *msg, VA_LIST args)
             case 'p': {
                 uint32_t h = VA_ARG(args, uint32_t);
                 x += WriteHex32(pos, h);
+                i++;
+                continue;
+            }
+            case 's': {
+                for (char *s = VA_ARG(args, char *); *s != '\0'; s++) {
+                    s_frameBuffer.WriteCell(pos++, *s);
+                    x++;
+                }
                 i++;
                 continue;
             }
@@ -189,24 +203,6 @@ void set_color(Color fg, Color bg)
 void clear()
 {
     s_frameBuffer.Clear();
-}
-
-void printfHex(uint8_t key) {
-    char res[] = "00";
-    const char *charset = "0123456789ABCDEF";
-    res[0] = charset[(key >> 4) & 0xF];
-    res[1] = charset[key & 0xF];
-    print(res);
-}
-
-void print_hex32(uint32_t key)
-{
-    print("0x");
-    printfHex((key >> 24) & 0xFF);
-    printfHex((key >> 16) & 0xFF);
-    printfHex((key >> 8) & 0xFF);
-    printfHex(key & 0xFF);
-    print("\n");
 }
 
 }; // namespace console

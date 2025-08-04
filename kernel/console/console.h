@@ -32,9 +32,6 @@ void move_cursor(unsigned short x, unsigned short y);
 void set_color(Color fg, Color bg);
 void clear();
 
-// TODO: Support this as a print argument instead of a function
-void print_hex32(uint32_t key);
-
 }; // namespace console
 
 #endif // CONSOLE_CONSOLE_H
