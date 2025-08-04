@@ -8,6 +8,9 @@
 // On x86 protected mode, the IDT can have up to 256 entries
 #define TOTAL_INTERRUPTS 256
 
+// Maximum number of global destructors
+#define MAX_DESTRUCTORS 128
+
 // 100MB heap size
 #define HEAP_SIZE_BYTES 104857600
 #define HEAP_BLOCK_SIZE 4096

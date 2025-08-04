@@ -7,7 +7,7 @@ extern "C" {
 
 // We let the compiler handle the registration of global destructors
 // by __cxa_atexit. It could be prevented by -fno-use-cxa-atexit,
-// in that case the .dtros secton is available for use.
+// in that case the .dtros section is available for use.
 // - destructor: function pointer
 // - arg: typically a pointer to the object that is being destroyed
 // - dso_handle: identifier for the Dynamic Shared Object

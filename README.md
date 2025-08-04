@@ -10,7 +10,7 @@ docker run -it --rm --name=build-bartos --platform=linux/amd64--mount=type=bind,
 
 ## Build parts of the project
 ```
-# Build the kernel in raw binary of ELF format
+# Build the kernel in raw binary or ELF format
 make kernel.bin
 make kernel.elf
 

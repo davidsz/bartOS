@@ -1,3 +1,4 @@
+#include "config.h"
 #include <stddef.h>
 
 struct DestructorEntry {
@@ -6,8 +7,6 @@ struct DestructorEntry {
     void *dso_handle;
 };
 
-// TODO: Make this dynamic
-const size_t MAX_DESTRUCTORS = 128;
 DestructorEntry s_destructorList[MAX_DESTRUCTORS];
 static size_t s_destructorCount = 0;
 

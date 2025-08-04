@@ -1,5 +1,6 @@
 #include "config.h"
 #include "console/console.h"
+#include "core/constructors.h"
 #include "core/destructors.h"
 #include "core/gdt.h"
 #include "core/idt.h"
@@ -23,26 +24,15 @@ extern "C" void *__dso_handle;
 void *__dso_handle = nullptr;
 
 // Will handle heap allocations
-BlockAllocator s_allocator(HEAP_BLOCK_SIZE);
-
-// Call all constructors of global objects. Without this, static objects
-// in the global scope just won't work.
-// (start_ctors and end_ctors are defined in the linker script)
-typedef void (*constructor)();
-extern "C" constructor start_ctors;
-extern "C" constructor end_ctors;
-void call_constructors()
-{
-    for (constructor *i = &start_ctors; i != &end_ctors; i++)
-        (*i)();
-}
+static BlockAllocator s_allocator(HEAP_BLOCK_SIZE);
 
 // extern "C": Using C-style linking keeps the function name unmodified;
 // otherwise C++ extends the name and we can't call it from assembly.
 // (called by kernel.s)
 extern "C" int kernel_main()
 {
-    call_constructors();
+    // Call constructors of global objects.
+    core::call_constructors();
 
     // Global Descriptor Table
     core::setup_gdt();

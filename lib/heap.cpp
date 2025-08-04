@@ -3,9 +3,7 @@
 #include "include/status.h"
 #include <stdint.h>
 
-namespace {
-IAllocator *s_allocator;
-}
+static IAllocator *s_allocator = nullptr;
 
 int set_heap_allocator(IAllocator *allocator)
 {
