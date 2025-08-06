@@ -8,8 +8,9 @@ class IAllocator;
 int set_heap_allocator(IAllocator *allocator);
 
 // C-style allocation
-void *kmalloc(size_t size);
-void kfree(void *ptr);
+void *malloc(size_t size);
+void *kalloc(size_t size);
+void free(void *ptr);
 
 // New and delete
 void *operator new(size_t size);

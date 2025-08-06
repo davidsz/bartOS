@@ -66,10 +66,10 @@ void setup_gdt()
     add_segment_descriptor(0, 0, 0, 0);
 
     // Code segment
-    add_segment_descriptor(1, 0, 0xFFFFFFFF, 0b10011010);
+    add_segment_descriptor(1, 0, 0x000FFFFF, 0b10011010);
 
     // Data segment
-    add_segment_descriptor(2, 0, 0xFFFFFFFF, 0b10010010);
+    add_segment_descriptor(2, 0, 0x000FFFFF, 0b10010010);
 
     // Tell the system where GDT is and reload segment registers
     s_gdtPointer.size = sizeof(SegmentDescriptor) * s_gdtSize;

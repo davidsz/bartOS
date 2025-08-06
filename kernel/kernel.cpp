@@ -4,6 +4,7 @@
 #include "core/destructors.h"
 #include "core/gdt.h"
 #include "core/idt.h"
+#include "paging/paging.h"
 
 // Lib
 #include "block_allocator.h"
@@ -26,6 +27,9 @@ void *__dso_handle = nullptr;
 // Will handle heap allocations
 static BlockAllocator s_allocator(HEAP_BLOCK_SIZE);
 
+// Describes the kernel page directory
+static paging::Directory s_kernelPageDirectory = 0;
+
 // extern "C": Using C-style linking keeps the function name unmodified;
 // otherwise C++ extends the name and we can't call it from assembly.
 // (called by kernel.s)
@@ -34,11 +38,23 @@ extern "C" int kernel_main()
     // Call constructors of global objects.
     core::call_constructors();
 
+    // Initialize heap and support allocation methods
+    int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);
+    if (ret != Status::ALL_OK)
+        console::print("Failed to initialize the heap allocator.\n");
+    set_heap_allocator(&s_allocator);
+
     // Global Descriptor Table
     core::setup_gdt();
 
     // Interrupt Descriptor Table
     core::setup_idt();
+
+    // Setup paging
+    s_kernelPageDirectory = paging::new_directory(paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
+    paging::switch_directory(s_kernelPageDirectory);
+    paging::enable();
+
     // Interrupts were potentionally disabled by the bootloader
     // since the beginning of protected mode. It's safe to enable them again.
     core::enable_interrupts();
@@ -46,12 +62,6 @@ extern "C" int kernel_main()
     console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
     console::clear();
     console::print("bartOS raises\n\n");
-
-    // Initialize heap and support allocation methods
-    int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);
-    if (ret != Status::ALL_OK)
-        console::print("Failed to initialize the heap allocator.\n");
-    set_heap_allocator(&s_allocator);
 
     // TODO: Implement an exit condition
     while (true);
