@@ -62,7 +62,7 @@ void FrameBuffer::Print(const char *msg, VA_LIST args)
         if (msg[i] == '%' && msg[i + 1] != '\0') {
             switch(msg[i + 1]) {
             case 'c': {
-                s_frameBuffer.WriteCell(pos, VA_ARG(args, char));
+                WriteCell(pos, VA_ARG(args, char));
                 i++;
                 continue;
             }
@@ -81,7 +81,7 @@ void FrameBuffer::Print(const char *msg, VA_LIST args)
             }
             case 's': {
                 for (char *s = VA_ARG(args, char *); *s != '\0'; s++) {
-                    s_frameBuffer.WriteCell(pos++, *s);
+                    WriteCell(pos++, *s);
                     x++;
                 }
                 i++;
@@ -90,10 +90,10 @@ void FrameBuffer::Print(const char *msg, VA_LIST args)
             default: {}
             }
         }
-        s_frameBuffer.WriteCell(pos, msg[i]);
+        WriteCell(pos, msg[i]);
         x++;
     }
-    s_frameBuffer.MoveCursor(x, y);
+    MoveCursor(x, y);
 }
 
 void FrameBuffer::WriteCell(size_t i, char c)

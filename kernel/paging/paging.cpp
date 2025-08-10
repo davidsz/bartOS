@@ -1,5 +1,19 @@
 #include "paging.h"
 #include "heap.h"
+#include "status.h"
+
+// Structure of virtual addresses:
+// bit 31-22: Page directory index
+// bit 21-12: Page table index
+// bit 11-0:  Offset in page
+
+// Page directory entry (32 bits):
+// 7-4 bytes: Page table address
+// 3-0 bytes: Flags
+
+// Page table entry (32 bits):
+// 7-4 bytes: Physical address
+// 3-0 bytes:  Flags
 
 // These are not optional
 #define TOTAL_ENTRIES_PER_DIRECTORY 1024
@@ -12,7 +26,21 @@ static uint32_t *s_currentDirectory = 0;
 extern "C" void paging_load_directory(uint32_t *directory);
 extern "C" void paging_enable();
 
+static int get_indexes(void *virtual_address, uint32_t *directory_index_out, uint32_t *table_index_out)
+{
+    if (!paging::is_aligned(virtual_address))
+        return Status::EINVARG;
+    *directory_index_out = ((uint32_t)virtual_address / (TOTAL_ENTRIES_PER_DIRECTORY * PAGE_SIZE));
+    *table_index_out = ((uint32_t) virtual_address % (TOTAL_ENTRIES_PER_TABLE * PAGE_SIZE) / PAGE_SIZE);
+    return Status::ALL_OK;
+}
+
 namespace paging {
+
+bool is_aligned(void *address)
+{
+    return (uint32_t)address % PAGE_SIZE == 0;
+}
 
 // TODO: Do we care about deallocation?
 uint32_t *new_directory(uint8_t flags)
@@ -40,6 +68,23 @@ void switch_directory(uint32_t *directory)
 {
     paging_load_directory(directory);
     s_currentDirectory = directory;
+}
+
+int set_table_entry(uint32_t *directory, void *v_address, uint32_t value)
+{
+    if (!is_aligned(v_address))
+        return Status::EINVARG;
+
+    uint32_t directory_index = 0;
+    uint32_t table_index = 0;
+    int res = get_indexes(v_address, &directory_index, &table_index);
+    if (res < 0)
+        return res;
+
+    uint32_t entry = directory[directory_index];
+    uint32_t *table = (uint32_t *)(entry & 0xfffff000);
+    table[table_index] = value;
+    return Status::ALL_OK;
 }
 
 void enable()

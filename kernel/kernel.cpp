@@ -38,6 +38,10 @@ extern "C" int kernel_main()
     // Call constructors of global objects.
     core::call_constructors();
 
+    console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
+    console::clear();
+    console::print("bartOS raises\n\n");
+
     // Initialize heap and support allocation methods
     int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);
     if (ret != Status::ALL_OK)
@@ -53,15 +57,22 @@ extern "C" int kernel_main()
     // Setup paging
     s_kernelPageDirectory = paging::new_directory(paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
     paging::switch_directory(s_kernelPageDirectory);
+
+    char *ptr = (char *)kalloc(4096);
+    paging::set_table_entry(s_kernelPageDirectory, (void *)0x1000, (uint32_t)ptr | paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
+
     paging::enable();
+
+    char *ptr2 = (char *)0x1000;
+    ptr2[0] = 'A';
+    ptr2[1] = 'B';
+    console::print("Address of ptr: %p\nData of ptr: %s\n", ptr, ptr);
+    console::print("Address of ptr2: %p\nData of ptr2: %s\n", ptr2, ptr2);
+    console::print("Mapping %p to %p succeeded.\n", ptr, ptr2);
 
     // Interrupts were potentionally disabled by the bootloader
     // since the beginning of protected mode. It's safe to enable them again.
     core::enable_interrupts();
-
-    console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
-    console::clear();
-    console::print("bartOS raises\n\n");
 
     // TODO: Implement an exit condition
     while (true);
