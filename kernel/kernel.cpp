@@ -5,6 +5,7 @@
 #include "core/gdt.h"
 #include "core/idt.h"
 #include "paging/paging.h"
+#include "serial/serial.h"
 
 // Lib
 #include "block_allocator.h"
@@ -41,6 +42,9 @@ extern "C" int kernel_main()
     console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
     console::clear();
     console::print("bartOS raises\n\n");
+
+    serial::init();
+    serial::write("Hello serial!\n");
 
     // Initialize heap and support allocation methods
     int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);

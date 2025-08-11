@@ -29,7 +29,7 @@ Alternative way to build the project and compose the disc image.
 QEMU:
 ```
 # CD ISO
-qemu-system-x86_64 -cdrom .build/bartos.iso
+qemu-system-x86_64 -serial stdio -cdrom .build/bartos.iso
 # HD image
-qemu-system-x86_64 -hda .build/bartos.bin
+qemu-system-x86_64 -serial stdio -hda .build/bartos.bin
 ```
