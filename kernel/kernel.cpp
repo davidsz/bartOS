@@ -3,6 +3,7 @@
 #include "core/destructors.h"
 #include "core/gdt.h"
 #include "core/idt.h"
+#include "core/seriallogger.h"
 #include "output/console.h"
 #include "output/serial.h"
 #include "paging/paging.h"
@@ -25,6 +26,8 @@
 extern "C" void *__dso_handle;
 void *__dso_handle = nullptr;
 
+static core::SerialLogger s_logger;
+
 // Will handle heap allocations
 static BlockAllocator s_allocator(HEAP_BLOCK_SIZE);
 
@@ -45,6 +48,9 @@ extern "C" int kernel_main()
 
     serial::init();
     serial::write("Hello serial!\n%d, %d, %d...\n", 1, 2, 3);
+
+    log::set_logger(&s_logger);
+    log::info("Hello world!\n");
 
     // Initialize heap and support allocation methods
     int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);
