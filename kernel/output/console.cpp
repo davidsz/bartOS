@@ -134,8 +134,13 @@ void print(const char *msg, ...)
 {
     VA_LIST args;
     VA_START(args, msg);
-    s_frameBuffer.ProcessFormat(msg, args);
+    print(msg, args);
     VA_END(args);
+}
+
+void print(const char *msg, VA_LIST args)
+{
+    s_frameBuffer.ProcessFormat(msg, args);
 }
 
 void move_cursor(unsigned short x, unsigned short y)

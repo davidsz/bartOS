@@ -65,8 +65,13 @@ void write(const char *msg, ...)
 {
     VA_LIST args;
     VA_START(args, msg);
-    s_serialPort.ProcessFormat(msg, args);
+    write(msg, args);
     VA_END(args);
+}
+
+void write(const char *msg, VA_LIST args)
+{
+    s_serialPort.ProcessFormat(msg, args);
 }
 
 }; // namespace serial

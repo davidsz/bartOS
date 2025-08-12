@@ -1,4 +1,5 @@
 #include "formatdevice.h"
+#include "log.h"
 
 namespace core {
 
@@ -36,7 +37,9 @@ void FormatDevice::ProcessFormat(const char *format, VA_LIST args)
                 continue;
             }
             default: {
-                // TODO: Handle the unrecognized format
+                log::error("Unrecognized format placeholder: %c\n", format[i + 1]);
+                FormatProcessed();
+                return;
             }
             }
         }

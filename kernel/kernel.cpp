@@ -47,10 +47,9 @@ extern "C" int kernel_main()
     console::print("bartOS raises\n\n");
 
     serial::init();
-    serial::write("Hello serial!\n%d, %d, %d...\n", 1, 2, 3);
 
     log::set_logger(&s_logger);
-    log::info("Hello world!\n");
+    log::info("BartOS supports serial output.\n");
 
     // Initialize heap and support allocation methods
     int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);

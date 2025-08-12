@@ -1,8 +1,8 @@
 #include "idt.h"
 #include "config.h"
 #include "io.h"
+#include "log.h"
 #include "memory.h"
-#include "output/console.h"
 #include <stdint.h>
 
 #define PIC1          0x20   // Master PIC
@@ -92,7 +92,7 @@ void idt_zero() { }
 extern "C" void int21h();
 extern "C" void int21h_handler()
 {
-    console::print("Keyboard pressed!\n");
+    log::info("Keyboard pressed!\n");
     core::outb(0x20, 0x20); // Tell the PIC that the interrupt is handled
 }
 
