@@ -1,11 +1,11 @@
 #include "config.h"
-#include "console/console.h"
 #include "core/constructors.h"
 #include "core/destructors.h"
 #include "core/gdt.h"
 #include "core/idt.h"
+#include "output/console.h"
+#include "output/serial.h"
 #include "paging/paging.h"
-#include "serial/serial.h"
 
 // Lib
 #include "block_allocator.h"
@@ -44,7 +44,7 @@ extern "C" int kernel_main()
     console::print("bartOS raises\n\n");
 
     serial::init();
-    serial::write("Hello serial!\n");
+    serial::write("Hello serial!\n%d, %d, %d...\n", 1, 2, 3);
 
     // Initialize heap and support allocation methods
     int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);

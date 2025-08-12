@@ -1,22 +1,37 @@
 #include "serial.h"
-#include "status.h"
 #include "core/io.h"
+#include "formatdevice.h"
+#include "status.h"
 
-#define PORT 0x3f8    // COM1 (0x3f8)
+#define PORT 0x3f8    // COM1
 
-// It's a blocking, but really simple implementation
-static void serial_wait_for_transmit() {
-    while (!(core::inb(PORT + 5) & 0x20));
-}
+class SerialPort : public core::FormatDevice
+{
+public:
+    // core::FormatDevice
+    void PutChar(char c) override;
+    void FormatProcessed() override {}
 
-static void serial_write_char(char c) {
-    serial_wait_for_transmit();
+    int Init();
+private:
+    void WaitForTransmit();
+};
+
+static SerialPort s_serialPort;
+
+void SerialPort::PutChar(char c)
+{
+    // It's a blocking, but really simple implementation
+    WaitForTransmit();
     core::outb(PORT, c);
 }
 
-namespace serial {
+void SerialPort::WaitForTransmit()
+{
+    while (!(core::inb(PORT + 5) & 0x20));
+}
 
-int init()
+int SerialPort::Init()
 {
     core::outb(PORT + 1, 0x00);    // Disable all interrupts
     core::outb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
@@ -39,10 +54,19 @@ int init()
     return Status::ALL_OK;
 }
 
-void write(const char *msg)
+namespace serial {
+
+int init()
 {
-    while (*msg)
-        serial_write_char(*msg++);
+    return s_serialPort.Init();
+}
+
+void write(const char *msg, ...)
+{
+    VA_LIST args;
+    VA_START(args, msg);
+    s_serialPort.ProcessFormat(msg, args);
+    VA_END(args);
 }
 
 }; // namespace serial

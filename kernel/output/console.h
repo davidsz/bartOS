@@ -1,5 +1,5 @@
-#ifndef CONSOLE_CONSOLE_H
-#define CONSOLE_CONSOLE_H
+#ifndef OUTPUT_CONSOLE_H
+#define OUTPUT_CONSOLE_H
 
 #include <stdint.h>
 
@@ -34,4 +34,4 @@ void clear();
 
 }; // namespace console
 
-#endif // CONSOLE_CONSOLE_H
+#endif // OUTPUT_CONSOLE_H

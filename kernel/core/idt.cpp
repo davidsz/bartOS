@@ -1,11 +1,9 @@
 #include "idt.h"
-
 #include "config.h"
 #include "io.h"
 #include "memory.h"
+#include "output/console.h"
 #include <stdint.h>
-
-#include "console/console.h"
 
 #define PIC1          0x20   // Master PIC
 #define PIC2          0xA0   // Slave PIC
