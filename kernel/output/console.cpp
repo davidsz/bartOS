@@ -13,6 +13,7 @@ public:
     void FormatProcessed() override;
 
     void WriteCell(size_t i, char c);
+    void StartNewLine();
     void MoveCursor(unsigned short x, unsigned short y);
     void SetConsoleColor(console::Color fg, console::Color bg);
     void Clear();
@@ -50,20 +51,15 @@ static FrameBuffer s_frameBuffer;
 void FrameBuffer::PutChar(char c)
 {
     if (c == '\n') {
-        m_x = 0;
-        // TODO: Handle scrolling
-        m_y++;
+        StartNewLine();
         return;
     }
+
     const size_t pos = m_y * m_width + m_x;
     WriteCell(pos, c);
 
-    // Advance cursor
-    if (++m_x >= m_width) {
-        m_x = 0;
-        // TODO: Handle scrolling
-        m_y++;
-    }
+    if (++m_x >= m_width)
+        StartNewLine();
 }
 
 void FrameBuffer::FormatProcessed()
@@ -81,6 +77,27 @@ void FrameBuffer::WriteCell(size_t pos, char c)
     pos *= 2;
     m_frameBufferPtr[pos] = c;
     m_frameBufferPtr[pos + 1] = ((m_fgColor & 0x0F) << 4) | (m_bgColor & 0x0F);
+}
+
+void FrameBuffer::StartNewLine()
+{
+    m_x = 0;
+    m_y++;
+    // Scroll if needed: move everything up by one line and create an empty last line
+    if (m_y >= m_height) {
+        const size_t line_size = m_width * 2;
+        const size_t screen_size = m_length * 2;
+        const size_t last_line = screen_size - line_size;
+        for (size_t src = line_size; src < screen_size; src += 2) {
+            size_t dest = src - line_size;
+            m_frameBufferPtr[dest] = (uint16_t)m_frameBufferPtr[src];
+            if (src >= last_line) {
+                m_frameBufferPtr[src] = ' ';
+                m_frameBufferPtr[src + 1] = ((m_fgColor & 0x0F) << 4) | (m_bgColor & 0x0F);
+            }
+        }
+        m_y = m_height - 1;
+    }
 }
 
 void FrameBuffer::MoveCursor(unsigned short x, unsigned short y)
