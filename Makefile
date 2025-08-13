@@ -24,13 +24,14 @@ LIB_OBJECTS := $(patsubst $(LIB_SRC)/%.cpp,$(LIB_BUILD)/%_cpp.o,$(LIB_SOURCES))
 lib: $(LIB_TARGET)
 
 $(LIB_TARGET): $(LIB_OBJECTS)
-	mkdir -p $(LIB_INCLUDE)
-	cp -r $(LIB_SRC)/include/* $(LIB_INCLUDE)
 	$(LD) -r $(LIB_OBJECTS) -o $(LIB_TARGET)
 
-$(LIB_BUILD)/%_cpp.o: $(LIB_SRC)/%.cpp
-	mkdir -p $(LIB_BUILD)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(LIB_BUILD)/%_cpp.o: $(LIB_SRC)/%.cpp lib_headers
+	$(CC) $(CFLAGS) -I$(LIB_INCLUDE) -c $< -o $@
+
+lib_headers:
+	mkdir -p $(LIB_INCLUDE)
+	cp -r $(LIB_SRC)/include/* $(LIB_INCLUDE)
 
 # Bootloader
 bootloader.bin: $(BOOT_SRC)/bootloader.s

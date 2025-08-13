@@ -1,7 +1,7 @@
 #ifndef LIB_BLOCK_ALLOCATOR_H
 #define LIB_BLOCK_ALLOCATOR_H
 
-#include "iallocator.h"
+#include "heap.h"
 #include <stdint.h>
 
 #define HEAP_BLOCK_TABLE_ENTRY_TAKEN 0x01

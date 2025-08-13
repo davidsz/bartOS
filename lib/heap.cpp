@@ -1,7 +1,5 @@
-#include "include/heap.h"
-#include "include/iallocator.h"
-#include "include/memory.h"
-#include "include/status.h"
+#include "heap.h"
+#include "memory.h"
 #include <stdint.h>
 
 static IAllocator *s_allocator = nullptr;

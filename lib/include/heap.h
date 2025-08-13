@@ -1,9 +1,16 @@
 #ifndef LIB_HEAP_H
 #define LIB_HEAP_H
 
+#include "status.h"
 #include <stddef.h>
 
-class IAllocator;
+class IAllocator
+{
+public:
+    virtual int Initialize(void *heap_start, size_t heap_size) = 0;
+    virtual void *Allocate(size_t bytes) = 0;
+    virtual void Deallocate(void *ptr) = 0;
+};
 
 int set_heap_allocator(IAllocator *allocator);
 

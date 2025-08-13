@@ -1,5 +1,5 @@
-#include "include/log.h"
-#include "include/vargs.h"
+#include "log.h"
+#include "vargs.h"
 
 static log::ILogger *s_logger = nullptr;
 
