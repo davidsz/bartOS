@@ -49,7 +49,7 @@ step2:
     mov cr0, eax
 
     ; Set the value of the Code Segment register to CODE_SEG
-    ; (the offset of the code segment descriptor) by far jumpig
+    ; (the offset of the code segment descriptor) by far jumping
     jmp CODE_SEG:start_protected
 
 ; Global Descriptor Table
@@ -228,7 +228,7 @@ ata_lba_read:
     ; -----------------------------
     shr eax, 24        ; Shift the highest 4 bits of the LBA into the lower 4 bits
     or eax, 11100000b  ; Select LBA mode and the master drive
-    mov dx, 0x1F6      ; Specify the port for the Device/Head register
+    mov dx, 0x1F6      ; Specify the port as the Device/Head register
     out dx, al         ; Send the value to the port (AL is the lower 8 bits of EAX)
 
     ; Sector Count register (port 0x1F2)
@@ -269,7 +269,7 @@ ata_lba_read:
     ; We can read a sector from the Data register (port 0x1F0)
     mov ecx, 256         ; Number of words to read; 256 * 2 bytes = 512 bytes = 1 sector
     mov dx, 0x1F0
-    rep insw             ; Read ECX number of words from the Data register into [ES:DI] and increases DI by 2
+    rep insw             ; Read a word from the Data register into [ES:DI] and increases DI by 2
     pop ecx              ; Restore ECX from stack
     loop .next_sector    ; Decrease ECX and repeat
 

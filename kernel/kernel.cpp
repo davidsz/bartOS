@@ -4,6 +4,7 @@
 #include "core/gdt.h"
 #include "core/idt.h"
 #include "core/seriallogger.h"
+#include "disk/stream.h"
 #include "output/console.h"
 #include "output/serial.h"
 #include "paging/paging.h"
@@ -82,6 +83,16 @@ extern "C" int kernel_main()
     // Interrupts were potentionally disabled by the bootloader
     // since the beginning of protected mode. It's safe to enable them again.
     core::enable_interrupts();
+
+#if 0
+    disk::Stream disk;
+    disk.Seek(456);
+    uint8_t buffer[6];
+    log::info("Start reading from disk...\n");
+    disk.Read(buffer, 6);
+    log::info("Disk read: %s\n", buffer);
+    log::info("Current position: %d\n", disk.Position());
+#endif
 
     // TODO: Implement an exit condition
     while (true);
