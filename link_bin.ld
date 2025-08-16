@@ -26,11 +26,13 @@ SECTIONS
         KEEP(*(SORT_BY_INIT_PRIORITY( .ctors.* )));
         end_ctors = .;
 		*(.data)
+		kernel_load_end = .;
     }
 
     .bss :
     {
         *(COMMON)
         *(.bss)
+        bss_end = .;
     }
 }

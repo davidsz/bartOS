@@ -30,6 +30,4 @@ QEMU:
 ```
 # HD image
 qemu-system-x86_64 -serial stdio -hda ./build/bartos.iso
-# CD ISO
-qemu-system-x86_64 -serial stdio -cdrom ./build/bartos.iso
 ```

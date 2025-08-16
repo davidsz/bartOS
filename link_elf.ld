@@ -30,14 +30,15 @@ SECTIONS
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
 	{
-	    /* The .ctors segment contains the constructors of global objects,
+        /* The .ctors segment contains the constructors of global objects,
            which have to be called at the beginning of the kernel program.
            We make it available in C++ with this section. */
         start_ctors = .;
         KEEP(*( .ctors ));
         KEEP(*(SORT_BY_INIT_PRIORITY( .ctors.* )));
         end_ctors = .;
-		*(.data)
+        *(.data)
+        kernel_load_end = .;
 	}
 
 	/* Read-write data (uninitialized) and stack */
@@ -45,8 +46,6 @@ SECTIONS
 	{
 		*(COMMON)
 		*(.bss)
+		bss_end = .;
 	}
-
-	/* The compiler may produce other sections, by default it will put them in
-	   a segment with the same name. Simply add stuff here as needed. */
 }
