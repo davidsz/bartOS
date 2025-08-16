@@ -21,15 +21,15 @@ make bootloader.bin
 ## Disc image creator script
 Alternative way to build the project and compose the disc image.
 ```
-./build_image.sh --disc [cd|hd] --bootloader [custom|grub] --kernel [elf|bin]
+./build_image.sh --bootloader [custom|grub] --kernel [elf|bin]
 ```
 
 ## Start the project in emulator
 
 QEMU:
 ```
-# CD ISO
-qemu-system-x86_64 -serial stdio -cdrom .build/bartos.iso
 # HD image
-qemu-system-x86_64 -serial stdio -hda .build/bartos.bin
+qemu-system-x86_64 -serial stdio -hda ./build/bartos.iso
+# CD ISO
+qemu-system-x86_64 -serial stdio -cdrom ./build/bartos.iso
 ```

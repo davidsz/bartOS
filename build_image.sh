@@ -1,7 +1,6 @@
 #!/bin/bash
 
-ARGS="--disc [cd|hd] --bootloader [custom|grub] --kernel [elf|bin]"
-DISC_FORMAT=""
+ARGS="--bootloader [custom|grub] --kernel [elf|bin]"
 BOOTLOADER=""
 KERNEL_FORMAT=""
 
@@ -17,10 +16,6 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --disc)
-            DISC_FORMAT="$2"
-            shift 2
-            ;;
         --bootloader)
             BOOTLOADER="$2"
             shift 2
@@ -39,26 +34,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -z "$DISC_FORMAT" || -z "$BOOTLOADER" || -z "$KERNEL_FORMAT" ]]; then
+if [[ -z "$BOOTLOADER" || -z "$KERNEL_FORMAT" ]]; then
     echo "Error - All arguments are mandatory: $ARGS"
-fi
-
-if [[ "$BOOTLOADER" == "grub" && "$DISC_FORMAT" == "hd" ]]; then
-    echo "Error - The GRUB on HDD case is not yet implemented / tested."
-    exit 1
 fi
 
 make clean
 mkdir -p $BUILDDIR
-
-if [[ "$BOOTLOADER" == "custom" ]]; then
-    make bootloader.bin
-elif [[ "$BOOTLOADER" == "grub" ]]; then
-    :
-else
-    echo "Error - Invalid argument."
-    usage
-fi
 
 if [[ "$KERNEL_FORMAT" == "elf" ]]; then
     make kernel.elf
@@ -71,23 +52,29 @@ else
     usage
 fi
 
-if [[ "$DISC_FORMAT" == "cd" ]]; then
-    cp -R iso $BUILDDIR/iso
-	cp $KERNEL_FILE $BUILDDIR/iso/boot/kernel.bin
-	mkisofs -R                                               \
-		-b boot/grub/stage2_eltorito                         \
-		-no-emul-boot                                        \
-		-boot-load-size 4                                    \
-		-boot-info-table                                     \
-		-o $CD_IMG                                           \
-		$BUILDDIR/iso
-	echo "Image is done: $CD_IMG"
-elif [[ "$DISC_FORMAT" == "hd" ]]; then
+if [[ "$BOOTLOADER" == "custom" ]]; then
+    make bootloader.bin
     rm -rf "$HD_IMG"
-	dd if=$BUILDDIR/bootloader/bootloader.bin >> "$HD_IMG"
-	dd if=$KERNEL_FILE >> "$HD_IMG"
-	dd if=/dev/zero bs=512 count=100 >> "$HD_IMG"
-	echo "Image is done: $HD_IMG"
+    dd if=$BUILDDIR/bootloader/bootloader.bin >> "$HD_IMG"
+    dd if=$KERNEL_FILE >> "$HD_IMG"
+    dd if=/dev/zero bs=512 count=100 >> "$HD_IMG"
+    echo "Image is done: $HD_IMG"
+
+elif [[ "$BOOTLOADER" == "grub" ]]; then
+    mkdir -p $BUILDDIR/iso/boot/grub
+    cat <<EOF > $BUILDDIR/iso/boot/grub/grub.cfg
+set timeout=0
+set default=0
+
+menuentry "BartOS" {
+    multiboot /boot/kernel.bin
+    boot
+}
+EOF
+    cp $KERNEL_FILE $BUILDDIR/iso/boot/kernel.bin
+    grub-mkrescue -o $CD_IMG $BUILDDIR/iso/
+    echo "Image is done: $CD_IMG"
+
 else
     echo "Error - Invalid argument."
     usage
