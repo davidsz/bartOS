@@ -6,8 +6,7 @@ KERNEL_FORMAT=""
 
 BUILDDIR="build"
 KERNEL_FILE=""
-HD_IMG="$BUILDDIR/bartos.bin"
-CD_IMG="$BUILDDIR/bartos.iso"
+IMG="$BUILDDIR/bartos.img"
 
 usage() {
     echo "Usage: $0 $ARGS"
@@ -53,14 +52,16 @@ else
 fi
 
 if [[ "$BOOTLOADER" == "custom" ]]; then
+    # TODO: Add more files after we implemented a proper file system support
     make bootloader.bin
-    rm -rf "$HD_IMG"
-    dd if=$BUILDDIR/bootloader/bootloader.bin >> "$HD_IMG"
-    dd if=$KERNEL_FILE >> "$HD_IMG"
-    dd if=/dev/zero bs=512 count=100 >> "$HD_IMG"
-    echo "Image is done: $HD_IMG"
+    rm -rf "$IMG"
+    dd if=$BUILDDIR/bootloader/bootloader.bin >> "$IMG"
+    dd if=$KERNEL_FILE >> "$IMG"
+    dd if=/dev/zero bs=512 count=100 >> "$IMG"
+    echo "Image is done: $IMG"
 
 elif [[ "$BOOTLOADER" == "grub" ]]; then
+    # Add the GRUB config and the kernel
     mkdir -p $BUILDDIR/iso/boot/grub
     cat <<EOF > $BUILDDIR/iso/boot/grub/grub.cfg
 set timeout=0
@@ -72,8 +73,16 @@ menuentry "BartOS" {
 }
 EOF
     cp $KERNEL_FILE $BUILDDIR/iso/boot/kernel.bin
-    grub-mkrescue -o $CD_IMG $BUILDDIR/iso/
-    echo "Image is done: $CD_IMG"
+
+    # An additional file for testing
+    mkdir -p $BUILDDIR/iso/home/user/
+    cat <<EOF > $BUILDDIR/iso/home/user/file.txt
+This is example data for testing.
+EOF
+
+    # Compose the image
+    grub-mkrescue -o $IMG $BUILDDIR/iso/
+    echo "Image is done: $IMG"
 
 else
     echo "Error - Invalid argument."

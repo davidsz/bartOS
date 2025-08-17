@@ -3,7 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get -y install \
     build-essential nasm \
-    grub2 mkisofs xorriso \
+    grub2 xorriso \
     git curl bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo libisl-dev gcc-multilib g++-multilib
 
 WORKDIR /home/ubuntu

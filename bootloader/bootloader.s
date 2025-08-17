@@ -18,7 +18,30 @@ DATA_SEG            equ gdt_data - gdt_start
 ; The first 3 bytes of this is reserved for jumpig over the non-executeable data
 jmp short step1  ; 2 bytes
 nop              ; 1 byte
+; TODO: We ran out of space in the first sector, we need second stage bootloader
+; Let's skip these bytes for now
 times 33 db 0    ; 33 bytes
+; --- FAT16 Header (31 bytes) ---
+;OEMIdentifier           db 'BARTOS  '
+;BytesPerSector          dw 0x200
+;SectorsPerCluster       db 0x80
+;ReservedSectors         dw 200
+;FATCopies               db 0x02
+;RootDirEntries          dw 0x40
+;NumSectors              dw 0x00
+;MediaType               db 0xF8
+;SectorsPerFat           dw 0x100
+;SectorsPerTrack         dw 0x20
+;NumberOfHeads           dw 0x40
+;HiddenSectors           dd 0x00
+;SectorsBig              dd 0x773594
+; --- Extended BPB (26 bytes) ---
+;DriveNumber             db 0x80
+;WinNTBit                db 0x00
+;Signature               db 0x29
+;VolumeID                dd 0xD105
+;VolumeIDString          db 'BARTOS WEEE'
+;SystemIDString          db 'FAT16   '
 
 step1:
     ; Start with setting a default value to all segment registers to maintain full control
