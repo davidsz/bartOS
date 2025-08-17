@@ -12,6 +12,7 @@
 // Lib
 #include "block_allocator.h"
 #include "heap.h"
+#include "path.h"
 
 // Check if the compiler thinks you are targeting the wrong operating system.
 #if defined(__linux__)
@@ -83,6 +84,14 @@ extern "C" int kernel_main()
     // Interrupts were potentionally disabled by the bootloader
     // since the beginning of protected mode. It's safe to enable them again.
     core::enable_interrupts();
+
+#if 0
+    Path path("0:/home/user/test.txt");
+    const Vector<String> &parts = path.Components();
+    log::info("Path parts: %d\n", parts.size());
+    for (size_t i = 0; i < parts.size(); i++)
+        log::info("Component %d: %s\n", i, parts[i].c_str());
+#endif
 
 #if 0
     disk::Stream disk;

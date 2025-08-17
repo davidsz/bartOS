@@ -5,7 +5,8 @@ enum Status : short int {
     ALL_OK = 0,
     EIO = -1,
     EINVARG = -2,
-    ENOMEM = -3
+    ENOMEM = -3,
+    EBADPATH = -4
 };
 
 #endif // LIB_STATUS_H
