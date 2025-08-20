@@ -1,4 +1,6 @@
 #!/bin/bash
+# Terminate on errors
+set -e
 
 ARGS="--bootloader [custom|grub] --kernel [elf|bin]"
 BOOTLOADER=""
@@ -52,10 +54,21 @@ else
 fi
 
 if [[ "$BOOTLOADER" == "custom" ]]; then
-    # TODO: Add more files after we implemented a proper file system support
-    make bootloader.bin
     rm -rf "$IMG"
-    dd if=$BUILDDIR/bootloader/bootloader.bin >> "$IMG"
+    make bootloader
+
+    # first_stage.bin is already 512 bytes
+    dd if=$BUILDDIR/bootloader/first_stage.bin >> "$IMG"
+
+    # Pad second_stage.bin to 512 bytes
+    size=$(stat -c%s $BUILDDIR/bootloader/second_stage.bin)
+    pad=$(( (512 - size % 512) % 512 ))
+    if [ "$pad" -ne 0 ]; then
+      dd if=/dev/zero bs=1 count=$pad >> $BUILDDIR/bootloader/second_stage.bin
+    fi
+    dd if=$BUILDDIR/bootloader/second_stage.bin >> "$IMG"
+
+    # Kernel
     dd if=$KERNEL_FILE >> "$IMG"
     dd if=/dev/zero bs=512 count=100 >> "$IMG"
     echo "Image is done: $IMG"

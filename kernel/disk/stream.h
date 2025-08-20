@@ -9,11 +9,11 @@ namespace disk {
 
 class Stream : public IIODevice {
 public:
-	void Read(uint8_t *out, size_t bytes);
-	void Write(const uint8_t *data, size_t bytes);
-	void Seek(size_t pos);
-	size_t Position();
-	void Close();
+	void Read(uint8_t *out, size_t bytes) override;
+	void Write(const uint8_t *data, size_t bytes) override;
+	void Seek(size_t pos) override;
+	size_t Position() override;
+	void Close() override;
 
 private:
     size_t m_pos = 0;
