@@ -17,9 +17,8 @@ void memcpy(void *dest, const void *src, size_t size)
         ((char *)dest)[i] = ((char *)src)[i];
 }
 
-void *memset(void *ptr, int c, size_t size)
-{
-    for (unsigned int i = 0; i < size; i++)
-        ((char *)ptr)[i] = (char)c;
+void *memset(void *ptr, uint8_t byte, size_t size) {
+    for (size_t i = 0; i < size; i++)
+        ((uint8_t *)ptr)[i] = byte;
     return ptr;
 }

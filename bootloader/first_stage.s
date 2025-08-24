@@ -100,7 +100,7 @@ start_protected:
     add ebx, SECTOR_SIZE
     push ebx                    ; Destination address
     dec eax
-    push eax                    ; Number of sectors remaining sectors
+    push eax                    ; Remaining sectors
     push dword 2                ; Start from the second LBA
     call ata_lba_read
     add esp, 12
@@ -108,6 +108,9 @@ start_protected:
 .second_stage_loaded:
     ; Push the kernel's LBA to the stack as argument
     add eax, 2
+    push eax
+    ; Push the stage2's byte size to the stack as argument
+    mov eax, dword [SECOND_STAGE_ADDR]
     push eax
     ; Parse the second 4 bytes -> the entry point address of the second stage
     mov eax, dword [SECOND_STAGE_ADDR + 4]

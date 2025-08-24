@@ -8,14 +8,23 @@ SECTIONS
 
   .header :
   {
-    LONG(__padded_end - __image_start)
+    LONG(__data_end - __image_start)
     LONG(_start_second_stage)
   }
 
   .text : { *(.text*) }
   .rodata : { *(.rodata*) }
-  .data : { *(.data*) }
-  .bss  : { *(.bss*) *(COMMON) }
 
-  __padded_end = .;
+  .data : {
+    start_ctors = .;
+    KEEP(*( .ctors ));
+    KEEP(*(SORT_BY_INIT_PRIORITY( .ctors.* )));
+    end_ctors = .;
+
+    *(.data*)
+
+    __data_end = .;
+  }
+
+  .bss  : { *(.bss*) *(COMMON) }
 }

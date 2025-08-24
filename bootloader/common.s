@@ -1,13 +1,10 @@
 ; Common constants
 FIRST_STAGE_ADDR    equ 0x00007C00     ; First stage is loaded between 0x7c00-0x7DFF (= 512 bytes)
 SECOND_STAGE_ADDR   equ 0x00007E00     ; Second stage is starting after the first
-; KERNEL_LOAD_ADDR    equ 0x00100000     ; Load the kernel to this address
 SECTOR_SIZE         equ 512            ; Sector size in bytes
-; KERNEL_DISC_OFFSET  equ SECTOR_SIZE    ; The kernel starts from the second sector
-; MB_MAGIC            equ 0x1BADB002     ; Magic constant; helps to validate the Multiboot header
-; MB_FLAG_ADDR        equ (1 << 16)      ; Flag: load address fields of the Multiboot header are valid
 ;-------------------------------------------------------------------------------
 
+global ata_lba_read
 ; Using the ATA controller to read sectors from the hard drive, addressed by Logical Block Address
 ; Args on stack (cdecl):
 ;   [ebp+8]  = uint32 - LBA of the starting point
@@ -89,6 +86,7 @@ ata_lba_read:
     ret                  ; End of the ata_lba_read routine
 ;-------------------------------------------------------------------------------
 
+global bytes_to_sectors
 ; Calculate the number of sectors to read
 ; Number of sectors = (bytes + (SECTOR_SIZE - 1)) / SECTOR_SIZE
 ; Args on stack (cdecl):
