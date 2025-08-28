@@ -7,17 +7,6 @@ extern second_stage_cpp          ; Implemented in C++
 section .text
 _start_second_stage:
     call second_stage_cpp
-    add esp, 8
-    jmp eax
-    ; push dword 10
-    ; push dword 0
-    ; call second_stage_cpp
-    ; add esp, 8
 
 ; Common functions of the bootloader stages
 %include "bootloader/common.s"
-
-global jump_to_address
-jump_to_address:
-    mov eax, [esp+4]
-    jmp eax

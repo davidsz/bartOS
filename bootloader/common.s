@@ -94,13 +94,15 @@ global bytes_to_sectors
 ; Returns:
 ;   eax = Number of sectors
 bytes_to_sectors:
-    ; Arguments
-    mov eax, [esp+4]             ; Number of bytes
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp+8]             ; Number of bytes
 
     xor edx, edx                 ; Null out EDX for division
     add eax, SECTOR_SIZE - 1     ; bytes + SECTOR_SIZE - 1
     mov ebx, SECTOR_SIZE         ; Divisor
     div ebx                      ; EAX = EDX:EAX / EBX; EDX = remainder
 
+    pop ebp
     ret                          ; End of the bytes_to_sectors routine
 ; -----------------------------------------------------------------------------

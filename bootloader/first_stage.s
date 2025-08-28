@@ -109,9 +109,6 @@ start_protected:
     ; Push the kernel's LBA to the stack as argument
     add eax, 2
     push eax
-    ; Push the stage2's byte size to the stack as argument
-    mov eax, dword [SECOND_STAGE_ADDR]
-    push eax
     ; Parse the second 4 bytes -> the entry point address of the second stage
     mov eax, dword [SECOND_STAGE_ADDR + 4]
     jmp eax                     ; Jump to the second stage

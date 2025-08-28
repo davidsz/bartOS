@@ -16,13 +16,7 @@ SECTIONS
   .rodata : { *(.rodata*) }
 
   .data : {
-    start_ctors = .;
-    KEEP(*( .ctors ));
-    KEEP(*(SORT_BY_INIT_PRIORITY( .ctors.* )));
-    end_ctors = .;
-
     *(.data*)
-
     __data_end = .;
   }
 
