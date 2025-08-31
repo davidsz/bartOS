@@ -43,7 +43,6 @@ step2:
     mov ss, ax
     mov fs, ax
     mov sp, 0x7c00
-    ; mov sp, 0x90000
     sti ; critical section ends (set interrupt flag)
 
     ; Start switching to protected mode
@@ -55,10 +54,18 @@ step2:
     ; Load Global Descriptor Table
     lgdt[gdt_addr]
 
-    ; Set Protection Enable bit in CR0 (Control Register 0)
+    ; Change CR0 (Control Register 0) to comply with Multiboot specs
     mov eax, cr0
-    or eax, 0x1
+    or eax, 0x1            ; Set Protection Enable bit
+    and eax, 0x7FFFFFFF    ; Clear Paging bit
     mov cr0, eax
+
+    ; Change EFLAGS to comply with Multiboot specs
+    pushfd                 ; Put EFLAGS register onto the stack
+    pop eax
+    and eax, 0xFFFDFBFF    ; Clear bit 17 (Virtual 8086 mode) and bit 9 (Interrupt Flag)
+    push eax
+    popfd                  ; Write back EFLAGS from the stack
 
     ; Set the value of the Code Segment register to CODE_SEG
     ; (the offset of the code segment descriptor) by far jumping

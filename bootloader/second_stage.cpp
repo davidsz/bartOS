@@ -47,13 +47,13 @@ static Multiboot_Header *find_multiboot_header(uint32_t start_address)
     return ret;
 }
 
-using EntryPointFunc = void(*)();
-
 extern "C" void ata_lba_read(uint32_t start_lba, uint32_t num_sectors, uint32_t dest_addr);
 extern "C" uint32_t bytes_to_sectors(uint32_t bytes);
 
-extern "C" void second_stage_cpp(uint32_t kernel_lba)
+extern "C" uint32_t second_stage_cpp(uint32_t kernel_lba)
 {
+    uint32_t kernel_entry_addr = 0;
+
     // Load the first sector of the kernel
     ata_lba_read(kernel_lba, 1, TEST_SECTORS_ADDRESS);
     // Determine its format by looking into the loaded sector
@@ -69,8 +69,7 @@ extern "C" void second_stage_cpp(uint32_t kernel_lba)
             }
             ph++;
         }
-        // Jump to ELF entry point
-        ((EntryPointFunc)elf_header->e_entry)();
+        kernel_entry_addr = elf_header->e_entry;
     } else {
         // Load more to test if the multiboot header can be found in the first 16 sectors (8192 bytes)
         ata_lba_read(kernel_lba + 1, 15, TEST_SECTORS_ADDRESS + SECTOR_SIZE);
@@ -80,14 +79,12 @@ extern "C" void second_stage_cpp(uint32_t kernel_lba)
             // Zero out the BSS
             if (header->bss_end_addr > header->load_end_addr)
                 memset((void *)header->load_end_addr, 0, header->bss_end_addr - header->load_end_addr);
-            // Jump to entry point
-            ((EntryPointFunc)header->entry_addr)();
+            kernel_entry_addr = header->entry_addr;
         }
     }
 
-    // TODO:
-    // - Collect boot information and ensure the proper machine state
-    //     - https://www.gnu.org/software/grub/manual/multiboot/multiboot.html
+    if (!kernel_entry_addr)
+        while (true);
 
-    while (true);
+    return kernel_entry_addr;
 }

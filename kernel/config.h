@@ -15,7 +15,6 @@
 #define HEAP_SIZE_BYTES 104857600
 #define HEAP_BLOCK_SIZE 4096
 #define HEAP_ADDRESS 0x01000000
-#define HEAP_TABLE_ADDRESS 0x00007E00
 
 // The most frequently used sector size
 #define SECTOR_SIZE 512

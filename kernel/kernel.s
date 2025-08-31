@@ -43,5 +43,6 @@ _start:
     ; Set up a stack before calling functions
     mov esp, stack_top
 
-    ; Enter the high-level kernel
-    call kernel_main
+    push ebx            ; Multiboot info structure
+    push eax            ; Multiboot magic number
+    call kernel_main    ; Enter the high-level kernel

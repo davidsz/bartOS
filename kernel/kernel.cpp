@@ -39,16 +39,17 @@ static paging::Directory s_kernelPageDirectory = 0;
 // extern "C": Using C-style linking keeps the function name unmodified;
 // otherwise C++ extends the name and we can't call it from assembly.
 // (called by kernel.s)
-extern "C" int kernel_main()
+extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 {
     // Call constructors of global objects.
     core::call_constructors();
 
+    serial::init();
     console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
     console::clear();
-    console::print("bartOS raises\n\n");
 
-    serial::init();
+    if (multiboot_magic == 0x2BADB002)
+        console::print("Loaded by a Multiboot compliant bootloader. (%p)\n\n", multiboot_magic);
 
     log::set_logger(&s_logger);
     log::info("BartOS supports serial output.\n");
