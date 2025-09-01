@@ -4,7 +4,8 @@
 #include "core/gdt.h"
 #include "core/idt.h"
 #include "core/seriallogger.h"
-#include "disk/stream.h"
+#include "disk/disk.h"
+#include "disk/filesystem.h"
 #include "output/console.h"
 #include "output/serial.h"
 #include "paging/paging.h"
@@ -44,6 +45,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     // Call constructors of global objects.
     core::call_constructors();
 
+    // Main outputs
     serial::init();
     console::set_color(console::Color::DarkGrey, console::Color::LightGrey);
     console::clear();
@@ -55,9 +57,8 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     log::info("BartOS supports serial output.\n");
 
     // Initialize heap and support allocation methods
-    int ret = s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);
-    if (ret != Status::ALL_OK)
-        console::print("Failed to initialize the heap allocator.\n");
+    if (s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES) != Status::ALL_OK)
+        log::error("Failed to initialize the heap allocator.\n");
     set_heap_allocator(&s_allocator);
 
     // Global Descriptor Table
@@ -70,17 +71,21 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     s_kernelPageDirectory = paging::new_directory(paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
     paging::switch_directory(s_kernelPageDirectory);
 
+#if 0
     char *ptr = (char *)kalloc(4096);
     paging::set_table_entry(s_kernelPageDirectory, (void *)0x1000, (uint32_t)ptr | paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
+#endif
 
     paging::enable();
 
+#if 0
     char *ptr2 = (char *)0x1000;
     ptr2[0] = 'A';
     ptr2[1] = 'B';
     console::print("Address of ptr: %p\nData of ptr: %s\n", ptr, ptr);
     console::print("Address of ptr2: %p\nData of ptr2: %s\n", ptr2, ptr2);
     console::print("Mapping %p to %p succeeded.\n", ptr, ptr2);
+#endif
 
     // Interrupts were potentionally disabled by the bootloader
     // since the beginning of protected mode. It's safe to enable them again.
@@ -94,15 +99,16 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
         log::info("Component %d: %s\n", i, parts[i].c_str());
 #endif
 
-#if 0
-    disk::Stream disk;
-    disk.Seek(456);
-    uint8_t buffer[6];
-    log::info("Start reading from disk...\n");
-    disk.Read(buffer, 6);
-    log::info("Disk read: %s\n", buffer);
-    log::info("Current position: %d\n", disk.Position());
-#endif
+    // Initialize supported file systems - disk initialization will use these
+    filesystem::init_all();
+
+    // Initialize disks
+    disk::search_and_init_all();
+    disk::Disk *primary_master = disk::get_by_letter(0);
+    if (!primary_master)
+        log::error("Failed to find primary master disk.\n");
+    console::print("Disk initialized: %p\n", primary_master);
+    console::print("--- file system: %p\n", primary_master->fileSystem());
 
     // TODO: Implement an exit condition
     while (true);

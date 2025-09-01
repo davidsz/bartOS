@@ -7,8 +7,13 @@
 
 namespace disk {
 
+class IDriver;
+
 class Stream : public IIODevice {
 public:
+	Stream(disk::IDriver *driver);
+
+	// IODevice
 	void Read(uint8_t *out, size_t bytes) override;
 	void Write(const uint8_t *data, size_t bytes) override;
 	void Seek(size_t pos) override;
@@ -16,6 +21,7 @@ public:
 	void Close() override;
 
 private:
+    disk::IDriver *m_driver;
     size_t m_pos = 0;
 };
 

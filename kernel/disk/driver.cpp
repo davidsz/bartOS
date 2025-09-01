@@ -1,11 +1,10 @@
 #include "driver.h"
 #include "core/io.h"
-
 #include "log.h"
 
 namespace disk {
 
-void read_sector(int lba, int total, void *buffer)
+void ATADriver::ReadSector(int lba, int total, void *buffer)
 {
     log::info("read_sector(%d, %d, %p)\n", lba, total, buffer);
     // Device/Head register (port 0x1F6)

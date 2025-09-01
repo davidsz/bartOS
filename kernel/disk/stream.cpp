@@ -6,6 +6,11 @@
 
 namespace disk {
 
+Stream::Stream(disk::IDriver *driver)
+    : m_driver(driver)
+{
+}
+
 void Stream::Read(uint8_t *out, size_t bytes)
 {
     log::info("Stream::Read(%p, %d)\n", out, bytes);
@@ -14,7 +19,7 @@ void Stream::Read(uint8_t *out, size_t bytes)
     int offset = m_pos % SECTOR_SIZE;
     uint8_t buf[SECTOR_SIZE];
 
-    disk::read_sector(lba, 1, buf);
+    m_driver->ReadSector(lba, 1, buf);
 
     int total_to_read = bytes > SECTOR_SIZE ? SECTOR_SIZE : bytes;
     for (int i = 0; i < total_to_read; i++)
