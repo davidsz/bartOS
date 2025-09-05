@@ -29,7 +29,7 @@ extern "C" void paging_enable();
 static int get_indexes(void *virtual_address, uint32_t *directory_index_out, uint32_t *table_index_out)
 {
     if (!paging::is_aligned(virtual_address))
-        return Status::EINVARG;
+        return Status::E_INVALID_ARGUMENT;
     *directory_index_out = ((uint32_t)virtual_address / (TOTAL_ENTRIES_PER_DIRECTORY * PAGE_SIZE));
     *table_index_out = ((uint32_t) virtual_address % (TOTAL_ENTRIES_PER_TABLE * PAGE_SIZE) / PAGE_SIZE);
     return Status::ALL_OK;
@@ -73,7 +73,7 @@ void switch_directory(uint32_t *directory)
 int set_table_entry(uint32_t *directory, void *v_address, uint32_t value)
 {
     if (!is_aligned(v_address))
-        return Status::EINVARG;
+        return Status::E_INVALID_ARGUMENT;
 
     uint32_t directory_index = 0;
     uint32_t table_index = 0;

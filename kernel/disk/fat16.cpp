@@ -8,4 +8,10 @@ bool FAT16::Resolve(disk::Disk *)
     return true;
 }
 
+FileDescriptor *FAT16::Open(disk::Disk *, const Path &)
+{
+    // TODO: Implement
+    return nullptr;
+}
+
 }; // namespace filesystem

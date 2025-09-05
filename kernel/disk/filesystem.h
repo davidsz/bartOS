@@ -2,6 +2,7 @@
 #define DISK_FILESYSTEM_H
 
 #include <stdint.h>
+#include "path.h"
 
 // Virtual File System layer
 
@@ -11,9 +12,20 @@ class Disk;
 
 namespace filesystem {
 
+class IFileSystem;
+
+class FileDescriptor {
+public:
+    uint32_t id;
+    Path path;
+    filesystem::IFileSystem *filesystem;
+    disk::Disk *disk;
+};
+
 class IFileSystem {
 public:
     virtual bool Resolve(disk::Disk *disk) = 0;
+    virtual filesystem::FileDescriptor *Open(disk::Disk *disk, const Path &path) = 0;
 };
 
 void init_all();

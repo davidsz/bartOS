@@ -5,16 +5,19 @@
 
 Path::Path(const char *path)
     : m_data(path)
+    , m_valid(false)
 {
     if (Parse() != Status::ALL_OK)
         log::error("Failed to parse path: %s\n", path);
+    else
+        m_valid = true;
 }
 
 int Path::Parse()
 {
     size_t length = m_data.length();
     if (length < 3 || !isdigit(m_data[0]) || memcmp((void *)&m_data[1], ":/", 2) != 0)
-        return Status::EBADPATH;
+        return Status::E_BAD_PATH;
 
     m_parts = m_data.split('/');
     m_driveLetter = m_parts[0][0];
@@ -24,6 +27,11 @@ int Path::Parse()
 const String &Path::Data() const
 {
     return m_data;
+}
+
+bool Path::Valid() const
+{
+    return m_valid;
 }
 
 char Path::DriveLetter() const

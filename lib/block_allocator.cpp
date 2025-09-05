@@ -15,7 +15,7 @@ BlockAllocator::~BlockAllocator()
 int BlockAllocator::Initialize(void *heap_start, size_t heap_size)
 {
     if (!ValidateAlignment(heap_start) || !ValidateAlignment((uint8_t *)heap_start + heap_size))
-        return Status::EINVARG;
+        return Status::E_INVALID_ARGUMENT;
 
     m_heapSize = heap_size;
     m_tableSize = heap_size / m_blockSize;
@@ -23,7 +23,7 @@ int BlockAllocator::Initialize(void *heap_start, size_t heap_size)
     m_heapStartAddress = (uint8_t *)heap_start + AlignBytesToUpper(m_tableSize);
 
     if (!ValidateAlignment(m_heapStartAddress))
-        return Status::EINVARG;
+        return Status::E_INVALID_ARGUMENT;
 
     memset(m_tableStartAddress, HEAP_BLOCK_TABLE_ENTRY_FREE, m_tableSize);
 
@@ -65,7 +65,7 @@ size_t BlockAllocator::GetStartBlock(size_t total_blocks)
     }
 
     if (bs == -1)
-        return Status::ENOMEM;
+        return Status::E_NO_MEMORY;
     return bs;
 }
 

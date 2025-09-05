@@ -7,7 +7,7 @@ static IAllocator *s_allocator = nullptr;
 int set_heap_allocator(IAllocator *allocator)
 {
     if (!allocator)
-        return Status::EINVARG;
+        return Status::E_INVALID_ARGUMENT;
     s_allocator = allocator;
     return Status::ALL_OK;
 }

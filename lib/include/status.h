@@ -3,10 +3,11 @@
 
 enum Status : short int {
     ALL_OK = 0,
-    EIO = -1,
-    EINVARG = -2,
-    ENOMEM = -3,
-    EBADPATH = -4
+    E_IO = -1,
+    E_INVALID_ARGUMENT = -2,
+    E_NO_MEMORY = -3,
+    E_BAD_PATH = -4,
+    E_CANT_ACCESS = -5,
 };
 
 #endif // LIB_STATUS_H

@@ -3,16 +3,19 @@
 
 #include <stddef.h>
 #include "heap.h"
+#include "utility.h"
 
 template <typename T>
 class Vector {
 public:
     explicit Vector();
+    ~Vector();
     Vector(Vector &&other);
     Vector<T> &operator=(Vector<T> &&other);
-    ~Vector();
+    // TODO
+    Vector(Vector &other) = delete;
+    Vector<T> &operator=(Vector<T> &other) = delete;
 
-    // TODO: Implement iterators
     T &front() const;
     T &back() const;
     T &operator[](int index);
@@ -26,18 +29,76 @@ public:
     size_t capacity() const;
     void clear();
 
+    class Iterator {
+        T *m_current;
+    public:
+        explicit Iterator(T *p) : m_current(p) {}
+
+        T &operator*() const { return *m_current; }
+        T *operator->() const { return m_current; }
+
+        Iterator &operator++() { ++m_current; return *this; }
+        Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+
+        Iterator &operator--() { --m_current; return *this; }
+        Iterator operator--(int) { Iterator tmp = *this; --(*this); return tmp; }
+
+        bool operator==(const Iterator &other) const { return m_current == other.m_current; }
+        bool operator!=(const Iterator &other) const { return m_current != other.m_current; }
+
+        Iterator operator+(int n) const { return Iterator(m_current + n); }
+        Iterator operator-(int n) const { return Iterator(m_current - n); }
+
+        ptrdiff_t operator-(const Iterator &other) const { return m_current - other.m_current; }
+
+        bool operator<(const Iterator &other) const { return m_current < other.m_current; }
+        bool operator>(const Iterator &other) const { return m_current > other.m_current; }
+        bool operator<=(const Iterator &other) const { return m_current <= other.m_current; }
+        bool operator>=(const Iterator &other) const { return m_current >= other.m_current; }
+
+        friend class Vector;
+    };
+
+    Iterator begin() { return Iterator(m_data); }
+    Iterator end() { return Iterator(m_data + m_size); }
+
+    Iterator insert(Iterator pos, const T &value) {
+        size_t index = pos.m_current - m_data;
+        if (index > m_size)
+            index = m_size;
+        if (m_size == m_capacity)
+            reserve(m_capacity * 2);
+        for (size_t i = m_size; i > index; i--)
+            m_data[i] = move(m_data[i - 1]);
+        m_data[index] = value;
+        m_size++;
+        return Iterator(m_data + index);
+    }
+
+    Iterator erase(const Iterator &pos) {
+        size_t index = pos.m_current - m_data;
+        if (index >= m_size)
+            return end();
+        for (size_t i = index; i + 1 < m_size; i++)
+            m_data[i] = move(m_data[i + 1]);
+        m_size--;
+        return Iterator(m_data + index);
+    }
+
 private:
     T *m_data;
     size_t m_size;
     size_t m_capacity;
 };
 
+// TODO: check initialization list support
 template <typename T>
 Vector<T>::Vector()
     : m_data(nullptr)
     , m_size(0)
     , m_capacity(0)
 {
+    reserve(16);
 }
 
 template <typename T>
@@ -121,7 +182,7 @@ void Vector<T>::reserve(size_t capacity)
         return;
     T *newData = (T *)malloc(sizeof(T) * capacity);
     for (size_t i = 0; i < m_size; i++)
-        newData[i] = m_data[i];
+        newData[i] = move(m_data[i]);
     delete[] m_data;
     m_data = newData;
     m_capacity = capacity;

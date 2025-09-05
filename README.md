@@ -15,7 +15,7 @@ make kernel.bin
 make kernel.elf
 
 # Make the bootloader individually
-make bootloader.bin
+make bootloader
 ```
 
 ## Disc image creator script

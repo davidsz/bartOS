@@ -15,7 +15,7 @@ Disk::Disk(disk::Type type, uint8_t driveLetter, IDriver *driver)
 {
     m_filesystem = filesystem::resolve(this);
     if (!m_filesystem)
-        log::error("Failed to resolve filesystem for disk\n");
+        log::error("Failed to resolve filesystem for disk '%c'.\n", driveLetter);
 }
 
 Disk::~Disk() = default;

@@ -10,6 +10,7 @@ class Path {
 public:
     explicit Path(const char *path);
     const String &Data() const;
+    bool Valid() const;
     char DriveLetter() const;
     const Vector<String> &Components() const;
 
@@ -18,7 +19,8 @@ public:
 private:
     int Parse();
 
-    const String m_data;
+    String m_data;
+    bool m_valid;
     Vector<String> m_parts;
     char m_driveLetter;
 };
