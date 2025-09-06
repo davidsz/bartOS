@@ -13,36 +13,55 @@ Disk::Disk(disk::Type type, uint8_t driveLetter, IDriver *driver)
     , m_driveLetter(driveLetter)
     , m_driver(driver)
 {
-    m_filesystem = filesystem::resolve(this);
-    if (!m_filesystem)
+    m_fileSystem = filesystem::resolve(this);
+    if (!m_fileSystem)
         log::error("Failed to resolve filesystem for disk '%c'.\n", driveLetter);
 }
 
-Disk::~Disk() = default;
+Disk::~Disk()
+{
+    // TODO
+    // delete m_fileSystemData;
+}
 
-disk::Type Disk::type()
+disk::Type Disk::type() const
 {
     return m_type;
 }
 
-uint8_t Disk::driveLetter()
+uint8_t Disk::driveLetter() const
 {
     return m_driveLetter;
 }
 
-unsigned int Disk::sectorSize()
+unsigned int Disk::sectorSize() const
 {
     return m_sectorSize;
 }
 
-filesystem::IFileSystem *Disk::fileSystem()
+filesystem::IFileSystem *Disk::fileSystem() const
 {
-    return m_filesystem;
+    return m_fileSystem;
 }
 
-disk::IDriver *Disk::driver()
+void *Disk::fileSystemData() const
+{
+    return m_fileSystemData;
+}
+
+disk::IDriver *Disk::driver() const
 {
     return m_driver;
+}
+
+void Disk::setFileSystemData(void *fileSystemData)
+{
+    m_fileSystemData = fileSystemData;
+}
+
+size_t Disk::sectorsToBytes(size_t sectors) const
+{
+    return sectors * m_sectorSize;
 }
 
 void search_and_init_all()

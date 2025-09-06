@@ -1,6 +1,7 @@
 #ifndef DISK_DISK_H
 #define DISK_DISK_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 namespace filesystem {
@@ -26,17 +27,23 @@ public:
     Disk(const Disk &) = delete;
     Disk &operator=(const Disk &) = delete;
 
-    disk::Type type();
-    uint8_t driveLetter();
-    unsigned int sectorSize();
-    filesystem::IFileSystem *fileSystem();
-    disk::IDriver *driver();
+    disk::Type type() const;
+    uint8_t driveLetter() const;
+    unsigned int sectorSize() const;
+    filesystem::IFileSystem *fileSystem() const;
+    void *fileSystemData() const;
+    disk::IDriver *driver() const;
+
+    void setFileSystemData(void *);
+
+    size_t sectorsToBytes(size_t sectors) const;
 
 private:
     disk::Type m_type;
     uint8_t m_driveLetter;
     unsigned int m_sectorSize = 512;
-    filesystem::IFileSystem *m_filesystem;
+    filesystem::IFileSystem *m_fileSystem;
+    void *m_fileSystemData;
     disk::IDriver *m_driver;
 };
 

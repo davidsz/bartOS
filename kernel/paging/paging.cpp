@@ -46,12 +46,12 @@ bool is_aligned(void *address)
 uint32_t *new_directory(uint8_t flags)
 {
     // Allocate page directory
-    // Memory blocks of kalloc are expected to be 4096 bytes aligned
-    uint32_t *directory = (uint32_t *)kalloc(sizeof(uint32_t) * TOTAL_ENTRIES_PER_DIRECTORY);
+    // Memory blocks of calloc are expected to be 4096 bytes aligned
+    uint32_t *directory = (uint32_t *)calloc(sizeof(uint32_t) * TOTAL_ENTRIES_PER_DIRECTORY);
     int offset = 0;
     for (int i = 0; i < TOTAL_ENTRIES_PER_DIRECTORY; i++) {
         // Each directory entry points to a page table
-        uint32_t *entry = (uint32_t *)kalloc(sizeof(uint32_t) * TOTAL_ENTRIES_PER_TABLE);
+        uint32_t *entry = (uint32_t *)calloc(sizeof(uint32_t) * TOTAL_ENTRIES_PER_TABLE);
         // Fill the page table with entries
         // Physical address | flags
         for (int b = 0; b < TOTAL_ENTRIES_PER_TABLE; b++)

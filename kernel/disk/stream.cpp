@@ -1,7 +1,6 @@
 #include "stream.h"
 #include "config.h"
 #include "driver.h"
-
 #include "log.h"
 
 namespace disk {
@@ -13,7 +12,6 @@ Stream::Stream(disk::IDriver *driver)
 
 void Stream::Read(uint8_t *out, size_t bytes)
 {
-    log::info("Stream::Read(%p, %d)\n", out, bytes);
     // TODO: Eliminate the recursive implementation
     int lba = m_pos / SECTOR_SIZE;
     int offset = m_pos % SECTOR_SIZE;

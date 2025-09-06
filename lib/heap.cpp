@@ -19,7 +19,7 @@ void *malloc(size_t size)
     return s_allocator->Allocate(size);
 }
 
-void *kalloc(size_t size)
+void *calloc(size_t size)
 {
     if (void *ptr = malloc(size)) {
         memset(ptr, 0x00, size);

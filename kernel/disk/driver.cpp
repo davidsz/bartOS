@@ -6,7 +6,6 @@ namespace disk {
 
 void ATADriver::ReadSector(int lba, int total, void *buffer)
 {
-    log::info("read_sector(%d, %d, %p)\n", lba, total, buffer);
     // Device/Head register (port 0x1F6)
     // 7   6   5   4   3   2   1   0
     // 1   L   1   D   H   H   H   H
@@ -31,23 +30,21 @@ void ATADriver::ReadSector(int lba, int total, void *buffer)
 
     unsigned short *ptr = (unsigned short *)buffer;
     for (int b = 0; b < total; b++) {
-        log::info("Waiting for BSY = 0...\n");
+        // Waiting for BSY = 0
         while (core::inb(0x1F7) & 0x80);
-
-        log::info("Waiting for DRDY = 1...\n");
+        // Waiting for DRQ = 1
         while (!(core::inb(0x1F7) & 0x40));
 
         // Check the ERR bit
         if (core::inb(0x1F7) & 0x01) {
             uint8_t error = core::inb(0x1F1);
-            log::error("ATA drive error: %02x\n", error);
+            log::error("ATADriver::ReadSector - ERR = %d\n", error);
             return;
         }
 
         // Wait for the buffer to be ready:
         // reading status from the Command/Status register
         // and test the Data Request Ready (DRQ) bit
-        log::info("Waiting for DRQ...\n");
         while (!(core::inb(0x1F7) & 0b00001000));
 
         // Copy from hard disk to memory

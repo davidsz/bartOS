@@ -70,7 +70,7 @@ if [[ "$BOOTLOADER" == "custom" ]]; then
 
     # Kernel
     dd if=$KERNEL_FILE >> "$IMG"
-    dd if=/dev/zero bs=512 count=100 >> "$IMG"
+    dd if=/dev/zero bs=1048576 count=16 >> "$IMG"
     echo "Image is done: $IMG"
 
 elif [[ "$BOOTLOADER" == "grub" ]]; then

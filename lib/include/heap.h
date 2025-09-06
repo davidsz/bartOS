@@ -16,7 +16,7 @@ int set_heap_allocator(IAllocator *allocator);
 
 // C-style allocation
 void *malloc(size_t size);
-void *kalloc(size_t size);
+void *calloc(size_t size);
 void free(void *ptr);
 
 // New and delete

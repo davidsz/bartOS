@@ -14,8 +14,7 @@ namespace filesystem {
 
 class IFileSystem;
 
-class FileDescriptor {
-public:
+struct FileDescriptor {
     uint32_t id;
     Path path;
     filesystem::IFileSystem *filesystem;
