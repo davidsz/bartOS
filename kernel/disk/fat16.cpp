@@ -3,8 +3,11 @@
 #include "log.h"
 #include "stream.h"
 #include <cstdint>
+#include <stddef.h>
 
 namespace filesystem {
+
+#define FAT_ENTRY_SIZE 0x02
 
 struct FAT_Header_Primary {
     uint8_t short_jmp_ins[3];
@@ -39,6 +42,16 @@ struct FAT_Header {
     } extended;
 };
 
+// Attributes of FAT_Directory_Item
+#define FAT_FILE_READ_ONLY      0b00000001
+#define FAT_FILE_HIDDEN         0b00000010
+#define FAT_FILE_SYSTEM         0b00000100
+#define FAT_FILE_VOLUME_LABEL   0b00001000
+#define FAT_FILE_SUBDIRECTORY   0b00010000
+#define FAT_FILE_ARCHIVED       0b00100000
+#define FAT_FILE_DEVICE         0b01000000
+#define FAT_FILE_RESERVED       0b10000000
+
 struct FAT_Directory_Item {
     uint8_t filename[8];
     uint8_t ext[3];
@@ -56,7 +69,7 @@ struct FAT_Directory_Item {
 } __attribute__((packed));
 
 struct FAT_Directory {
-    FAT_Directory_Item *item;
+    FAT_Directory_Item *items;
     int total;
     int sector_pos;
     int ending_sector_pos;
@@ -64,48 +77,172 @@ struct FAT_Directory {
 
 struct FAT_Item {
     union {
-        FAT_Item *file;
+        FAT_Directory_Item *item;
         FAT_Directory *directory;
     };
     enum Type {
-        FAT_FILE,
+        FAT_DIRECTORY_ITEM,
         FAT_DIRECTORY,
     } type;
 };
 
 struct FAT_File_Descriptor : public FileDescriptor {
-    FAT_Item *item;
+    FAT_Item *fat_item;
     uint32_t pos;
 };
 
 struct FAT_Disk_Data {
     FAT_Header header;
     FAT_Directory root_directory;
-    disk::Stream *cluster_read_stream;    // Used to stream data clusters
-    disk::Stream *fat_read_stream;        // Used to stream the file allocation table
-    disk::Stream *directory_stream;       // Used in situations where we stream the directory
+    Unique<disk::Stream> cluster_read_stream;    // Used to stream data clusters
+    Unique<disk::Stream> fat_read_stream;        // Used to stream the file allocation table
+    Unique<disk::Stream> directory_stream;       // Used in situations where we stream the directory
 };
 
 int FAT16::CountItemsInDirectory(disk::Disk *disk, int start_sector_pos)
 {
     FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
-
-    disk::Stream *stream = disk_data->directory_stream;
     int directory_start_pos = start_sector_pos * disk->sectorSize();
-    stream->Seek(directory_start_pos);
+    disk_data->directory_stream->Seek(directory_start_pos);
 
     int count = 0;
-    FAT_Directory_Item item;
+    FAT_Directory_Item file;
     while (true) {
-        stream->Read((uint8_t *)&item, sizeof(FAT_Directory_Item));
-        if (item.filename[0] == 0x00)
+        disk_data->directory_stream->Read((uint8_t *)&file, sizeof(FAT_Directory_Item));
+        if (file.filename[0] == 0x00)
             break; // Finished
-        if (item.filename[0] == 0xE5)
+        if (file.filename[0] == 0xE5)
             continue; // Item is unused
         count++;
     }
-
     return count;
+}
+
+uint32_t FAT16::GetFirstCluster(const FAT_Directory_Item *item)
+{
+    return (item->high_16_bits_first_cluster << 16) | item->low_16_bits_first_cluster;
+}
+
+int FAT16::ClusterToSector(FAT_Disk_Data *disk_data, uint32_t cluster)
+{
+    return disk_data->root_directory.ending_sector_pos + ((cluster - 2) * disk_data->header.primary.sectors_per_cluster);
+}
+
+void FAT16::ReadInternal(disk::Disk *disk, uint32_t starting_cluster, int offset, int total, void *out)
+{
+    FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
+    disk::Stream *stream = disk_data->cluster_read_stream.data();
+    ReadInternalFromStream(disk, stream, starting_cluster, offset, total, out);
+}
+
+void FAT16::ReadInternalFromStream(disk::Disk *disk, disk::Stream *stream, uint32_t cluster, int offset, int total, void *out)
+{
+    FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
+    int size_of_cluster_bytes = disk_data->header.primary.sectors_per_cluster * disk->sectorSize();
+    int cluster_to_use = GetClusterForOffset(disk, cluster, offset);
+    int offset_from_cluster = offset % size_of_cluster_bytes;
+    int starting_sector = ClusterToSector(disk_data, cluster_to_use);
+    int starting_pos = (starting_sector * disk->sectorSize()) + offset_from_cluster;
+    stream->Seek(starting_pos);
+
+    int total_to_read = total > size_of_cluster_bytes ? size_of_cluster_bytes : total;
+    stream->Read((uint8_t *)out, total_to_read);
+
+    total -= total_to_read;
+    if (total > 0)
+        ReadInternalFromStream(disk, stream, cluster, offset + total_to_read, total, (uint8_t *)out + total_to_read);
+}
+
+uint16_t FAT16::GetFATEntry(disk::Disk *disk, int cluster)
+{
+    FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
+    disk::Stream *stream = disk_data->fat_read_stream.data();
+    uint32_t fat_table_position = disk_data->header.primary.reserved_sectors * disk->sectorSize();
+    stream->Seek(fat_table_position + (cluster * FAT_ENTRY_SIZE));
+    uint16_t result = 0;
+    stream->Read((uint8_t *)&result, sizeof(result));
+    return result;
+}
+
+int FAT16::GetClusterForOffset(disk::Disk *disk, uint32_t starting_cluster, int offset)
+{
+    FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
+    int size_of_cluster_bytes = disk_data->header.primary.sectors_per_cluster * disk->sectorSize();
+    int cluster_to_use = starting_cluster;
+    int clusters_ahead = offset / size_of_cluster_bytes;
+    for (int i = 0; i < clusters_ahead; i++) {
+        int entry = GetFATEntry(disk, cluster_to_use);
+        // We are at the last entry in the file
+        if (entry == 0xFFF8 || entry == 0xFFFF)
+            return Status::E_IO;
+
+        // Sector is marked as bad
+        if (entry == 0xFF7)
+            return Status::E_IO;
+
+        // Reserved sector
+        if (entry == 0xFF0 || entry == 0xFF6)
+            return Status::E_IO;
+
+        // Unused
+        if (entry == 0x00)
+            return Status::E_IO;
+
+        cluster_to_use = entry;
+    }
+
+    return cluster_to_use;
+}
+
+FAT_Directory *FAT16::LoadDirectory(disk::Disk *disk, const FAT_Directory_Item *directory_item)
+{
+    if (!(directory_item->attribute & FAT_FILE_SUBDIRECTORY))
+        return nullptr;
+
+    FAT_Directory *directory = new FAT_Directory;
+
+    int cluster = GetFirstCluster(directory_item);
+    FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
+    int cluster_sector = ClusterToSector(disk_data, cluster);
+    int total_items = CountItemsInDirectory(disk, cluster_sector);
+    directory->total = total_items;
+
+    int directory_size = total_items * sizeof(FAT_Directory_Item);
+    // TODO: ownership
+    directory->items = (FAT_Directory_Item *)calloc(directory_size);
+    ReadInternal(disk, cluster, 0, directory_size, directory->items);
+
+    // TODO: sector_pos, ending_sector_pos?
+
+    return directory;
+}
+
+Unique<FAT_Item> FAT16::FindItemByNameInDirectory(disk::Disk *disk, const FAT_Directory &directory, const String &name)
+{
+    Unique<FAT_Item> ret(nullptr);
+    for (int i = 0; i < directory.total; i++) {
+        FAT_Directory_Item *item = &directory.items[i];
+
+        String item_filename;
+        if (*(item->ext) != 0)
+            item_filename = String::build("%s.%s", item->filename, item->ext); // TODO: Can be optimized
+        else
+            item_filename = String((char *)item->filename);
+
+        if (item_filename == name) {
+            ret.reset(new FAT_Item);
+            if (item->attribute & FAT_FILE_SUBDIRECTORY) {
+                ret->directory = LoadDirectory(disk, item);
+                ret->type = FAT_Item::FAT_DIRECTORY;
+            } else {
+                ret->item = item;
+                ret->type = FAT_Item::FAT_DIRECTORY_ITEM;
+            }
+            break;
+        }
+    }
+
+    return ret;
 }
 
 bool FAT16::Resolve(disk::Disk *disk)
@@ -114,9 +251,9 @@ bool FAT16::Resolve(disk::Disk *disk)
     disk->setFileSystemData(disk_data);
 
     // Streams
-    disk_data->cluster_read_stream = new disk::Stream(disk->driver());
-    disk_data->fat_read_stream = new disk::Stream(disk->driver());
-    disk_data->directory_stream = new disk::Stream(disk->driver());
+    disk_data->cluster_read_stream = Unique<disk::Stream>(new disk::Stream(disk->driver()));
+    disk_data->fat_read_stream = Unique<disk::Stream>(new disk::Stream(disk->driver()));
+    disk_data->directory_stream = Unique<disk::Stream>(new disk::Stream(disk->driver()));
 
     // Read the FAT headers
     disk::Stream stream(disk->driver());
@@ -135,11 +272,11 @@ bool FAT16::Resolve(disk::Disk *disk)
     if (root_dir_size % disk->sectorSize())
         total_sectors += 1;
 
-    FAT_Directory_Item *item = (FAT_Directory_Item *)calloc(root_dir_size);
+    FAT_Directory_Item *items = (FAT_Directory_Item *)calloc(root_dir_size);
     disk_data->directory_stream->Seek(disk->sectorsToBytes(root_dir_sector_pos));
-    disk_data->directory_stream->Read((uint8_t *)item, root_dir_size);
+    disk_data->directory_stream->Read((uint8_t *)items, root_dir_size);
 
-    disk_data->root_directory.item = item;
+    disk_data->root_directory.items = items;
     disk_data->root_directory.total = CountItemsInDirectory(disk, root_dir_sector_pos);
     disk_data->root_directory.sector_pos = root_dir_sector_pos;
     disk_data->root_directory.ending_sector_pos = root_dir_sector_pos + total_sectors;
@@ -147,10 +284,30 @@ bool FAT16::Resolve(disk::Disk *disk)
     return true;
 }
 
-FileDescriptor *FAT16::Open(disk::Disk *, const Path &)
+FileDescriptor *FAT16::Open(disk::Disk *disk, const Path &path)
 {
-    // TODO: Implement
-    return nullptr;
+    const Vector<String> &path_parts = path.components();
+    FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
+    Unique<FAT_Item> root_item = FindItemByNameInDirectory(disk, disk_data->root_directory, path_parts[0]);
+    if (!root_item) {
+        log::error("FAT16::Open: Could not find root directory\n");
+        return nullptr;
+    }
+
+    Unique<FAT_Item> current_item = move(root_item);
+    for (size_t i = 1; i < path_parts.size(); i++) {
+        const String &part = path_parts[i];
+        current_item = FindItemByNameInDirectory(disk, *current_item->directory, part);
+        if (current_item->type != FAT_Item::FAT_DIRECTORY) {
+            log::error("FAT16::Open: Could not find directory '%s'\n", part.c_str());
+            return nullptr;
+        }
+    }
+
+    FAT_File_Descriptor *descriptor = new FAT_File_Descriptor;
+    descriptor->fat_item = current_item.release();
+    descriptor->pos = 0;
+    return descriptor;
 }
 
 }; // namespace filesystem

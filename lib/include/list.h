@@ -21,6 +21,7 @@ public:
     T &back() const;
     void push_front(const T &value);
     void push_back(const T &value);
+    T pop_front();
     size_t length() const;
     void clear();
 
@@ -106,6 +107,18 @@ void List<T>::push_back(const T &value)
     while (node->next)
         node = node->next;
     node->next = new Node(value);
+}
+
+template <typename T>
+T List<T>::pop_front()
+{
+    if (!m_head)
+        return T();
+    Node *node = m_head;
+    m_head = m_head->next;
+    T data = node->data;
+    delete node;
+    return data;
 }
 
 template <typename T>

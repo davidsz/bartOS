@@ -3,6 +3,12 @@
 #include "memory.h"
 #include "status.h"
 
+Path::Path()
+    : m_data()
+    , m_valid(false)
+{
+}
+
 Path::Path(const char *path)
     : m_data(path)
     , m_valid(false)
@@ -24,22 +30,22 @@ int Path::Parse()
     return Status::ALL_OK;
 }
 
-const String &Path::Data() const
+const String &Path::data() const
 {
     return m_data;
 }
 
-bool Path::Valid() const
+bool Path::valid() const
 {
     return m_valid;
 }
 
-char Path::DriveLetter() const
+char Path::driveLetter() const
 {
     return m_driveLetter;
 }
 
-const Vector<String> &Path::Components() const
+const Vector<String> &Path::components() const
 {
     return m_parts;
 }

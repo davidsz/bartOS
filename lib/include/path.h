@@ -8,11 +8,12 @@
 
 class Path {
 public:
+    explicit Path();
     explicit Path(const char *path);
-    const String &Data() const;
-    bool Valid() const;
-    char DriveLetter() const;
-    const Vector<String> &Components() const;
+    const String &data() const;
+    bool valid() const;
+    char driveLetter() const;
+    const Vector<String> &components() const;
 
     String &operator[](int index);
     const String &operator[](int index) const;

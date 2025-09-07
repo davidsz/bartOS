@@ -7,11 +7,15 @@
 // TODO: Make it dynamic
 class String {
 public:
+    String();
     String(const char *str);
     String(const char *str, size_t length);
     String(const String &str);
     String(String &&str);
     ~String();
+
+    static String build(const char *format, ...);
+    static String reset(char *str);
 
     String &operator=(const String &str);
     String &operator=(String &&str);

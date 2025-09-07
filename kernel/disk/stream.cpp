@@ -10,6 +10,10 @@ Stream::Stream(disk::IDriver *driver)
 {
 }
 
+Stream::~Stream()
+{
+}
+
 void Stream::Read(uint8_t *out, size_t bytes)
 {
     // TODO: Eliminate the recursive implementation

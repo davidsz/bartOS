@@ -12,6 +12,7 @@ class IDriver;
 class Stream : public IIODevice {
 public:
 	Stream(disk::IDriver *driver);
+	virtual ~Stream();
 
 	// IODevice
 	void Read(uint8_t *out, size_t bytes) override;

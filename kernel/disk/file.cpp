@@ -17,14 +17,14 @@ int fopen(const char *p, const char *m)
     }
 
     Path path(p);
-    if (!path.Valid()) {
+    if (!path.valid()) {
         log::error("fopen failed to parse path '%s'", p);
         return Status::E_BAD_PATH;
     }
 
-    disk::Disk *disk = disk::get_by_letter(path.DriveLetter());
+    disk::Disk *disk = disk::get_by_letter(path.driveLetter());
     if (!disk) {
-        log::error("fopen failed to find disk for '%c'", path.DriveLetter());
+        log::error("fopen failed to find disk for '%c'", path.driveLetter());
         return Status::E_BAD_PATH;
     }
 
