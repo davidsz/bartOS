@@ -23,6 +23,7 @@ public:
     // IFileSystem
     bool Resolve(disk::Disk *disk) override;
     FileDescriptor *Open(disk::Disk *disk, const Path &path) override;
+    size_t Read(FileDescriptor *descriptor, size_t size, size_t count, char *buffer) override;
 
     int CountItemsInDirectory(disk::Disk *disk, int start_sector_pos);
     Unique<FAT_Item> FindItemByNameInDirectory(disk::Disk *disk, const FAT_Directory &directory, const String &name);

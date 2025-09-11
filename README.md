@@ -5,7 +5,7 @@ Das ist my hobby operating system project where I learn low level development. I
 ```
 docker build --platform=linux/amd64 -t build-bartos:1.0 .
 
-docker run -it --rm --name=build-bartos --platform=linux/amd64 --mount=type=bind,source=${PWD},target=/project --workdir=/project build-bartos:1.0 bash
+docker run -it --rm --privileged --name=build-bartos --platform=linux/amd64 --mount=type=bind,source=${PWD},target=/project --workdir=/project build-bartos:1.0 bash
 ```
 
 ## Build parts of the project

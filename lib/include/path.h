@@ -12,7 +12,7 @@ public:
     explicit Path(const char *path);
     const String &data() const;
     bool valid() const;
-    char driveLetter() const;
+    uint8_t driveLetter() const;
     const Vector<String> &components() const;
 
     String &operator[](int index);
@@ -23,7 +23,7 @@ private:
     String m_data;
     bool m_valid;
     Vector<String> m_parts;
-    char m_driveLetter;
+    uint8_t m_driveLetter;
 };
 
 #endif // LIB_PATH_H

@@ -26,7 +26,7 @@ int Path::Parse()
         return Status::E_BAD_PATH;
 
     m_parts = m_data.split('/');
-    m_driveLetter = m_parts[0][0];
+    m_driveLetter = tonumericdigit(m_parts[0][0]);
     return Status::ALL_OK;
 }
 
@@ -40,7 +40,7 @@ bool Path::valid() const
     return m_valid;
 }
 
-char Path::driveLetter() const
+uint8_t Path::driveLetter() const
 {
     return m_driveLetter;
 }

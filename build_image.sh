@@ -68,9 +68,24 @@ if [[ "$BOOTLOADER" == "custom" ]]; then
     fi
     dd if=$BUILDDIR/bootloader/second_stage.bin >> "$IMG"
 
-    # Kernel
+    # Kernel and some extra space for the file system
     dd if=$KERNEL_FILE >> "$IMG"
-    dd if=/dev/zero bs=1048576 count=16 >> "$IMG"
+    # dd if=/dev/zero bs=1048576 count=16 >> "$IMG"
+    dd if=/dev/zero bs=1048576 count=32 >> "$IMG"
+
+    # Mount and add test file
+    mkdir -p /mnt/d
+    mount -t vfat build/bartos.img /mnt/d
+    touch /mnt/d/file.txt
+    cat <<EOF > /mnt/d/file.txt
+This is example data for testing.
+EOF
+    touch /mnt/d/another.txt
+    cat <<EOF > /mnt/d/another.txt
+Another file for testing.
+EOF
+    umount /mnt/d
+
     echo "Image is done: $IMG"
 
 elif [[ "$BOOTLOADER" == "grub" ]]; then

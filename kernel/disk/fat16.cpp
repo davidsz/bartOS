@@ -223,13 +223,22 @@ Unique<FAT_Item> FAT16::FindItemByNameInDirectory(disk::Disk *disk, const FAT_Di
     for (int i = 0; i < directory.total; i++) {
         FAT_Directory_Item *item = &directory.items[i];
 
-        String item_filename;
-        if (*(item->ext) != 0)
-            item_filename = String::build("%s.%s", item->filename, item->ext); // TODO: Can be optimized
-        else
-            item_filename = String((char *)item->filename);
+        // Normalize file name and extension
+        char item_filename[13]; // filename[8] + '.' + ext[3] + '0'
+        size_t pos = 0;
+        unsigned char *c = item->filename;
+        for (size_t i = 0; i < 12; i++, c++) {
+            if (i == 8 && c[1] != 0x00 && c[1] != 0x20)
+                item_filename[pos++] = '.';
+            if (*c == 0x20 || *c == 0x00)
+                continue;
+            else
+                item_filename[pos++] = tolower(*c);
+        }
+        item_filename[pos] = '\0';
 
-        if (item_filename == name) {
+        // TODO: Overload operator for this case
+        if (strcmp(item_filename, name.c_str()) == 0) {
             ret.reset(new FAT_Item);
             if (item->attribute & FAT_FILE_SUBDIRECTORY) {
                 ret->directory = LoadDirectory(disk, item);
@@ -267,7 +276,7 @@ bool FAT16::Resolve(disk::Disk *disk)
     FAT_Header_Primary *primary_header = &disk_data->header.primary;
     int root_dir_sector_pos = (primary_header->fat_copies * primary_header->sectors_per_fat) + primary_header->reserved_sectors;
     int root_dir_entries = primary_header->root_dir_entries;
-    int root_dir_size = root_dir_entries * sizeof(FAT_Directory);
+    int root_dir_size = root_dir_entries * sizeof(FAT_Directory_Item);
     int total_sectors = root_dir_size / disk->sectorSize();
     if (root_dir_size % disk->sectorSize())
         total_sectors += 1;
@@ -288,14 +297,14 @@ FileDescriptor *FAT16::Open(disk::Disk *disk, const Path &path)
 {
     const Vector<String> &path_parts = path.components();
     FAT_Disk_Data *disk_data = (FAT_Disk_Data *)disk->fileSystemData();
-    Unique<FAT_Item> root_item = FindItemByNameInDirectory(disk, disk_data->root_directory, path_parts[0]);
+    Unique<FAT_Item> root_item = FindItemByNameInDirectory(disk, disk_data->root_directory, path_parts[1]);
     if (!root_item) {
         log::error("FAT16::Open: Could not find root directory\n");
         return nullptr;
     }
 
     Unique<FAT_Item> current_item = move(root_item);
-    for (size_t i = 1; i < path_parts.size(); i++) {
+    for (size_t i = 2; i < path_parts.size(); i++) {
         const String &part = path_parts[i];
         current_item = FindItemByNameInDirectory(disk, *current_item->directory, part);
         if (current_item->type != FAT_Item::FAT_DIRECTORY) {
@@ -308,6 +317,19 @@ FileDescriptor *FAT16::Open(disk::Disk *disk, const Path &path)
     descriptor->fat_item = current_item.release();
     descriptor->pos = 0;
     return descriptor;
+}
+
+size_t FAT16::Read(FileDescriptor *descriptor, size_t size, size_t count, char *buffer)
+{
+    FAT_File_Descriptor *desc = (FAT_File_Descriptor *)descriptor;
+    FAT_Directory_Item *item = desc->fat_item->item;
+    int offset = desc->pos;
+    for (uint32_t i = 0; i < count; i++) {
+        ReadInternal(desc->disk, GetFirstCluster(item), offset, size, buffer);
+        buffer += size;
+        offset += size;
+    }
+    return count;
 }
 
 }; // namespace filesystem

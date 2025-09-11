@@ -24,7 +24,8 @@ struct FileDescriptor {
 class IFileSystem {
 public:
     virtual bool Resolve(disk::Disk *disk) = 0;
-    virtual filesystem::FileDescriptor *Open(disk::Disk *disk, const Path &path) = 0;
+    virtual FileDescriptor *Open(disk::Disk *disk, const Path &path) = 0;
+    virtual size_t Read(FileDescriptor *descriptor, size_t size, size_t count, char *buffer) = 0;
 };
 
 void init_all();

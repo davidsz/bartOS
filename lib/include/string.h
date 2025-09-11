@@ -41,5 +41,8 @@ int strlen(const char *ptr);
 int strnlen(const char *ptr, int max);
 bool isdigit(char c);
 int tonumericdigit(char c);
+char tolower(char c);
+int strcmp(const char *s1, const char *s2);
+int strcasecmp(const char *s1, const char *s2);
 
 #endif // LIB_STRING_H

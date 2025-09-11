@@ -8,40 +8,59 @@ namespace core {
 
 static Vector<filesystem::FileDescriptor *> s_descriptors;
 
+static filesystem::FileDescriptor *GetDescriptor(int fd)
+{
+    return s_descriptors[fd];
+}
+
 int fopen(const char *p, const char *m)
 {
     // TODO: Handle modes
     if (*m != 'r') {
-        log::error("fopen doesn't support mode '%c'", m);
+        log::error("fopen doesn't support mode '%c'\n", m);
         return E_INVALID_ARGUMENT;
     }
 
     Path path(p);
     if (!path.valid()) {
-        log::error("fopen failed to parse path '%s'", p);
+        log::error("fopen failed to parse path '%s'\n", p);
         return Status::E_BAD_PATH;
     }
 
     disk::Disk *disk = disk::get_by_letter(path.driveLetter());
     if (!disk) {
-        log::error("fopen failed to find disk for '%c'", path.driveLetter());
+        log::error("fopen failed to find disk for '%d'\n", path.driveLetter());
         return Status::E_BAD_PATH;
     }
 
     filesystem::FileDescriptor *fd = disk->fileSystem()->Open(disk, path);
     if (!fd) {
-        log::error("fopen failed to open file '%s'", p);
+        log::error("fopen failed to open file '%s'\n", p);
         return Status::E_CANT_ACCESS;
     }
 
     auto it = s_descriptors.end();
-    fd->id = s_descriptors.size() - 1;
+    fd->id = s_descriptors.size();
     fd->path = move(path);
     fd->filesystem = disk->fileSystem();
     fd->disk = disk;
     s_descriptors.insert(it, fd);
 
     return fd->id;
+}
+
+int fread(void *buffer, size_t size, size_t count, uint32_t fd_id)
+{
+    if (size == 0 || count == 0)
+        return 0;
+
+    filesystem::FileDescriptor *fd = GetDescriptor(fd_id);
+    if (!fd) {
+        log::error("fread failed to get descriptor for ID %d", fd);
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    return fd->filesystem->Read(fd, size, count, (char *)buffer);
 }
 
 };

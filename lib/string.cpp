@@ -215,3 +215,32 @@ int tonumericdigit(char c)
 {
     return c - 48;
 }
+
+char tolower(char c)
+{
+    if (c >= 65 && c <= 90)
+        c += 32;
+    return c;
+}
+
+int strcmp(const char *s1, const char *s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return (unsigned char)(*s1) - (unsigned char)(*s2);
+}
+
+int strcasecmp(const char *s1, const char *s2)
+{
+    char c1, c2;
+    while (*s1 && *s2) {
+        c1 = tolower(*s1++);
+        c2 = tolower(*s2++);
+        if (c1 != c2)
+            return c1 - c2;
+    }
+    c1 = tolower(*s1);
+    c2 = tolower(*s2);
+    return c1 - c2;
+}

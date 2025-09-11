@@ -5,6 +5,7 @@
 #include "core/idt.h"
 #include "core/seriallogger.h"
 #include "disk/disk.h"
+#include "disk/file.h"
 #include "disk/filesystem.h"
 #include "output/console.h"
 #include "output/serial.h"
@@ -104,11 +105,31 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 
     // Initialize disks
     disk::search_and_init_all();
-    disk::Disk *primary_master = disk::get_by_letter(0);
-    if (!primary_master)
-        log::error("Failed to find primary master disk.\n");
-    console::print("Disk initialized: %p\n", primary_master);
-    console::print("--- file system: %p\n", primary_master->fileSystem());
+
+    // Test file handling
+    int fd = core::fopen("0:/file.txt", "r");
+    if (fd >= 0) {
+        console::print("We opened file.txt\n");
+        char buf[14];
+        console::print("Reading file.txt\n");
+        core::fread(buf, 13, 1, fd);
+        buf[13] = 0x00;
+        console::print("Result:\n");
+        console::print(buf);
+        console::print("\n---\n");
+    }
+
+    int fd2 = core::fopen("0:/another.txt", "r");
+    if (fd2 >= 0) {
+        console::print("We opened another.txt\n");
+        char buf[14];
+        console::print("Reading another.txt\n");
+        core::fread(buf, 13, 1, fd2);
+        buf[13] = 0x00;
+        console::print("Result:\n");
+        console::print(buf);
+        console::print("\n---\n");
+    }
 
     // TODO: Implement an exit condition
     while (true);

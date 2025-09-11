@@ -12,21 +12,21 @@ jmp short step1  ; 2 bytes
 nop              ; 1 byte
 ; --- BIOS Parameter Block (31 bytes) ---
 OEMIdentifier           db 'BARTOS  '
-BytesPerSector          dw 0x200
-SectorsPerCluster       db 0x80
+BytesPerSector          dw 512
+SectorsPerCluster       db 128
 ReservedSectors         dw 200
-FATCopies               db 0x02
-RootDirEntries          dw 0x40
-NumSectors              dw 0x00
+FATCopies               db 2
+RootDirEntries          dw 64
+NumSectors              dw 0
 MediaType               db 0xF8
-SectorsPerFat           dw 0x100
-SectorsPerTrack         dw 0x20
-NumberOfHeads           dw 0x40
-HiddenSectors           dd 0x00
+SectorsPerFat           dw 256
+SectorsPerTrack         dw 32
+NumberOfHeads           dw 64
+HiddenSectors           dd 0
 SectorsBig              dd 0x773594
 ; --- Extended BPB (26 bytes) ---
-DriveNumber             db 0x80
-WinNTBit                db 0x00
+DriveNumber             db 128
+WinNTBit                db 0
 Signature               db 0x29
 VolumeID                dd 0xD105
 VolumeIDString          db 'BARTOS WEEE'
