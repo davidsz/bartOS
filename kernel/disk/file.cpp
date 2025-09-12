@@ -74,6 +74,17 @@ int fseek(uint32_t fd_id, size_t offset, filesystem::FileSeekMode whence)
     return fd->filesystem->Seek(fd, offset, whence);
 }
 
+int fstat(uint32_t fd_id, filesystem::FileStat *stat)
+{
+    filesystem::FileDescriptor *fd = GetDescriptor(fd_id);
+    if (!fd) {
+        log::error("fstat failed to get descriptor for ID %d", fd_id);
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    return fd->filesystem->Stat(fd, stat);
+}
+
 int fclose(int fd_id)
 {
     filesystem::FileDescriptor *fd = GetDescriptor(fd_id);

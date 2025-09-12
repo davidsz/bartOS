@@ -380,6 +380,24 @@ int FAT16::Seek(FileDescriptor *descriptor, size_t offset, FileSeekMode seek_mod
     return 0;
 }
 
+int FAT16::Stat(FileDescriptor *descriptor, FileStat *stat)
+{
+    FAT_File_Descriptor *desc = (FAT_File_Descriptor *)descriptor;
+    FAT_Item *fat_item = desc->fat_item;
+    if (fat_item->type == FAT_Item::FAT_DIRECTORY) {
+        log::error("Stat: Not yet implemented for directories\n");
+        return Status::E_NOT_IMPLEMENTED;
+    }
+
+    FAT_Directory_Item *item = fat_item->item;
+    stat->size = item->filesize;
+    stat->flags = 0;
+    if (item->attribute & FAT_FILE_READ_ONLY)
+        stat->flags |= FileStatFlag::ReadOnly;
+
+    return 0;
+}
+
 bool FAT16::Close(FileDescriptor *)
 {
     // fclose will delete the descriptor

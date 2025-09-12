@@ -102,12 +102,13 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     int fd = core::fopen("0:/file.txt", "r");
     if (fd >= 0) {
         console::print("We opened file.txt\n");
-        char buf[14];
-        console::print("Seeking file.txt\n");
-        core::fseek(fd, 4, filesystem::SEEK_SET);
+        filesystem::FileStat stat;
+        core::fstat(fd, &stat);
+        console::print("Size: %d\n", stat.size);
+        char buf[stat.size + 1];
         console::print("Reading file.txt\n");
-        core::fread(buf, 9, 1, fd);
-        buf[13] = 0x00;
+        core::fread(buf, stat.size, 1, fd);
+        buf[stat.size] = 0x00;
         console::print("Result:\n");
         console::print(buf);
         console::print("\n---\n");

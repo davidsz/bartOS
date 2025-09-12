@@ -30,6 +30,7 @@ public:
     virtual FileDescriptor *Open(disk::Disk *disk, const Path &path) = 0;
     virtual size_t Read(FileDescriptor *descriptor, size_t size, size_t count, char *buffer) = 0;
     virtual int Seek(FileDescriptor *descriptor, size_t offset, FileSeekMode whence) = 0;
+    virtual int Stat(FileDescriptor *descriptor, FileStat *stat) = 0;
     virtual bool Close(FileDescriptor *descriptor) = 0;
 };
 
