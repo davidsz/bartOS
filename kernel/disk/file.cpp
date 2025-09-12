@@ -18,7 +18,7 @@ int fopen(const char *p, const char *m)
     // TODO: Handle modes
     if (*m != 'r') {
         log::error("fopen doesn't support mode '%c'\n", m);
-        return E_INVALID_ARGUMENT;
+        return E_NOT_IMPLEMENTED;
     }
 
     Path path(p);
@@ -74,4 +74,17 @@ int fseek(uint32_t fd_id, size_t offset, filesystem::FileSeekMode whence)
     return fd->filesystem->Seek(fd, offset, whence);
 }
 
-};
+int fclose(int fd_id)
+{
+    filesystem::FileDescriptor *fd = GetDescriptor(fd_id);
+    if (!fd) {
+        log::error("fclose failed to get descriptor for ID %d", fd_id);
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    if (fd->filesystem->Close(fd))
+        delete fd;
+    return 0;
+}
+
+}; // namespace core

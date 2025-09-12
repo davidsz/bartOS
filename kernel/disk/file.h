@@ -21,11 +21,8 @@ namespace core {
 int fopen(const char *path, const char *mode);
 size_t fread(void *buffer, size_t size, size_t count, uint32_t fd);
 int fseek(uint32_t fd, size_t offset, filesystem::FileSeekMode whence);
-/*
 int fclose(int fd);
-int ftell(int fd);
-int fwrite(const void *ptr, int size, int count, int fd);
-*/
+
 }; // namespace core
 
 #endif // DISK_FILE_H

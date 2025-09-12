@@ -92,14 +92,6 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     // since the beginning of protected mode. It's safe to enable them again.
     core::enable_interrupts();
 
-#if 0
-    Path path("0:/home/user/test.txt");
-    const Vector<String> &parts = path.Components();
-    log::info("Path parts: %d\n", parts.size());
-    for (size_t i = 0; i < parts.size(); i++)
-        log::info("Component %d: %s\n", i, parts[i].c_str());
-#endif
-
     // Initialize supported file systems - disk initialization will use these
     filesystem::init_all();
 
@@ -111,12 +103,15 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     if (fd >= 0) {
         console::print("We opened file.txt\n");
         char buf[14];
+        console::print("Seeking file.txt\n");
+        core::fseek(fd, 4, filesystem::SEEK_SET);
         console::print("Reading file.txt\n");
-        core::fread(buf, 13, 1, fd);
+        core::fread(buf, 9, 1, fd);
         buf[13] = 0x00;
         console::print("Result:\n");
         console::print(buf);
         console::print("\n---\n");
+        core::fclose(fd);
     }
 
     int fd2 = core::fopen("0:/another.txt", "r");
@@ -129,6 +124,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
         console::print("Result:\n");
         console::print(buf);
         console::print("\n---\n");
+        core::fclose(fd2);
     }
 
     // TODO: Implement an exit condition

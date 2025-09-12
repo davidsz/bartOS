@@ -69,6 +69,10 @@ struct FAT_Directory_Item {
 } __attribute__((packed));
 
 struct FAT_Directory {
+    ~FAT_Directory() {
+        delete items;
+    }
+
     FAT_Directory_Item *items;
     int total;
     int sector_pos;
@@ -76,6 +80,13 @@ struct FAT_Directory {
 };
 
 struct FAT_Item {
+    ~FAT_Item() {
+        if (type == FAT_DIRECTORY_ITEM)
+            delete item;
+        else if (type == FAT_DIRECTORY)
+            delete directory;
+    }
+
     union {
         FAT_Directory_Item *item;
         FAT_Directory *directory;
@@ -87,6 +98,10 @@ struct FAT_Item {
 };
 
 struct FAT_File_Descriptor : public FileDescriptor {
+    ~FAT_File_Descriptor() {
+        delete fat_item;
+    }
+
     FAT_Item *fat_item;
     uint32_t pos;
 };
@@ -363,6 +378,12 @@ int FAT16::Seek(FileDescriptor *descriptor, size_t offset, FileSeekMode seek_mod
     }
 
     return 0;
+}
+
+bool FAT16::Close(FileDescriptor *)
+{
+    // fclose will delete the descriptor
+    return true;
 }
 
 }; // namespace filesystem
