@@ -1,8 +1,9 @@
 #ifndef DISK_FILESYSTEM_H
 #define DISK_FILESYSTEM_H
 
-#include <stdint.h>
+#include "file.h"
 #include "path.h"
+#include <stdint.h>
 
 // Virtual File System layer
 
@@ -26,6 +27,7 @@ public:
     virtual bool Resolve(disk::Disk *disk) = 0;
     virtual FileDescriptor *Open(disk::Disk *disk, const Path &path) = 0;
     virtual size_t Read(FileDescriptor *descriptor, size_t size, size_t count, char *buffer) = 0;
+    virtual int Seek(FileDescriptor *descriptor, size_t offset, FileSeekMode whence) = 0;
 };
 
 void init_all();

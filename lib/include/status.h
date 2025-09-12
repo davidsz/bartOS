@@ -8,6 +8,7 @@ enum Status : short int {
     E_NO_MEMORY = -3,
     E_BAD_PATH = -4,
     E_CANT_ACCESS = -5,
+    E_NOT_IMPLEMENTED = -6,
 };
 
 #endif // LIB_STATUS_H

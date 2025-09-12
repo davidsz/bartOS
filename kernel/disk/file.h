@@ -6,13 +6,23 @@
 
 // Virtual File System layer
 
+namespace filesystem {
+
+enum FileSeekMode {
+    SEEK_SET,
+    SEEK_CUR,
+    SEEK_END
+};
+
+}; // namespace filesystem
+
 namespace core {
 
 int fopen(const char *path, const char *mode);
-int fread(void *buffer, size_t size, size_t count, uint32_t fd);
+size_t fread(void *buffer, size_t size, size_t count, uint32_t fd);
+int fseek(uint32_t fd, size_t offset, filesystem::FileSeekMode whence);
 /*
 int fclose(int fd);
-int fseek(int fd, int offset, int whence);
 int ftell(int fd);
 int fwrite(const void *ptr, int size, int count, int fd);
 */

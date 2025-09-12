@@ -332,4 +332,37 @@ size_t FAT16::Read(FileDescriptor *descriptor, size_t size, size_t count, char *
     return count;
 }
 
+int FAT16::Seek(FileDescriptor *descriptor, size_t offset, FileSeekMode seek_mode)
+{
+    FAT_File_Descriptor *desc = (FAT_File_Descriptor *)descriptor;
+    FAT_Item *fat_item = desc->fat_item;
+    if (fat_item->type == FAT_Item::FAT_DIRECTORY) {
+        log::error("Seek: Cannot seek in directory\n");
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    if (fat_item->item->filesize <= offset) {
+        log::error("Seek: Cannot seek past end of file\n");
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    switch (seek_mode)
+    {
+    case FileSeekMode::SEEK_SET:
+        desc->pos = offset;
+        break;
+    case FileSeekMode::SEEK_END:
+        log::error("Seek: SEEK_END mode is unimplemented.\n");
+        return Status::E_NOT_IMPLEMENTED;
+    case FileSeekMode::SEEK_CUR:
+        desc->pos += offset;
+        break;
+    default:
+        log::error("Seek: Invalid seek mode\n");
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    return 0;
+}
+
 }; // namespace filesystem

@@ -49,18 +49,29 @@ int fopen(const char *p, const char *m)
     return fd->id;
 }
 
-int fread(void *buffer, size_t size, size_t count, uint32_t fd_id)
+size_t fread(void *buffer, size_t size, size_t count, uint32_t fd_id)
 {
     if (size == 0 || count == 0)
         return 0;
 
     filesystem::FileDescriptor *fd = GetDescriptor(fd_id);
     if (!fd) {
-        log::error("fread failed to get descriptor for ID %d", fd);
-        return Status::E_INVALID_ARGUMENT;
+        log::error("fread failed to get descriptor for ID %d", fd_id);
+        return 0;
     }
 
     return fd->filesystem->Read(fd, size, count, (char *)buffer);
+}
+
+int fseek(uint32_t fd_id, size_t offset, filesystem::FileSeekMode whence)
+{
+    filesystem::FileDescriptor *fd = GetDescriptor(fd_id);
+    if (!fd) {
+        log::error("fseek failed to get descriptor for ID %d", fd_id);
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    return fd->filesystem->Seek(fd, offset, whence);
 }
 
 };
