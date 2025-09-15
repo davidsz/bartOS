@@ -1,6 +1,9 @@
 #include "gdt.h"
-
+#include "config.h"
+#include "tss.h"
 #include <stdint.h>
+
+namespace segmentation {
 
 // The GdtPointer is used to indicate the place of the GDT in memory
 struct GdtPointer
@@ -22,15 +25,15 @@ struct SegmentDescriptor
 } __attribute__((packed));
 
 // GDT is basically an array of segment descriptors
-const int s_gdtSize = 3;
+const int s_gdtSize = 6;
 SegmentDescriptor s_gdt[s_gdtSize];
 GdtPointer s_gdtPointer;
 
+TaskStateSegment s_tss;
+
 /*
 *  Loads the GDT and flushes segment registers
-*  Defined in gdt_flush.s
-*
-*  @param GdtPointer filled with address and size
+*  Defined in segmentation.s
 */
 extern "C" void flush_gdt(const GdtPointer *);
 
@@ -56,8 +59,6 @@ void add_segment_descriptor(uint8_t i, uint32_t base, uint32_t limit, uint8_t ac
     s_gdt[i] = desc;
 }
 
-namespace core {
-
 void setup_gdt()
 {
     // The first descriptor in the GDT must not be used,
@@ -65,16 +66,30 @@ void setup_gdt()
     // This supports error detection and other kernel features.
     add_segment_descriptor(0, 0, 0, 0);
 
-    // Code segment
-    add_segment_descriptor(1, 0, 0x000FFFFF, 0b10011010);
+    // Kernel code segment
+    add_segment_descriptor(1, 0, 0xFFFFFFFF, 0b10011010);
 
-    // Data segment
-    add_segment_descriptor(2, 0, 0x000FFFFF, 0b10010010);
+    // Kernel data segment
+    add_segment_descriptor(2, 0, 0xFFFFFFFF, 0b10010010);
+
+    // User code segment
+    add_segment_descriptor(3, 0, 0xFFFFFFFF, 0b11111000);
+
+    // User data segment
+    add_segment_descriptor(4, 0, 0xFFFFFFFF, 0b11110010);
+
+    // Task state segment
+    add_segment_descriptor(5, (uint32_t)&s_tss, sizeof(TaskStateSegment), 0b11101001);
 
     // Tell the system where GDT is and reload segment registers
     s_gdtPointer.size = sizeof(SegmentDescriptor) * s_gdtSize;
     s_gdtPointer.address = (uint32_t)s_gdt;
     flush_gdt(&s_gdtPointer);
+
+    // TODO: Don't do magic here
+    s_tss.esp0 = 0x600000;
+    s_tss.ss0 = KERNEL_DATA_SELECTOR;
+    load_tss(TASK_STATE_SELECTOR);
 }
 
-}; // namespace core
+}; // namespace segmentation

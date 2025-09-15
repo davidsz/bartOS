@@ -1,15 +1,14 @@
 #include "config.h"
 #include "core/constructors.h"
 #include "core/destructors.h"
-#include "core/gdt.h"
 #include "core/idt.h"
 #include "core/seriallogger.h"
 #include "disk/disk.h"
-#include "disk/file.h"
 #include "disk/filesystem.h"
 #include "output/console.h"
 #include "output/serial.h"
 #include "paging/paging.h"
+#include "segmentation/gdt.h"
 
 // Lib
 #include "block_allocator.h"
@@ -63,7 +62,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     set_heap_allocator(&s_allocator);
 
     // Global Descriptor Table
-    core::setup_gdt();
+    segmentation::setup_gdt();
 
     // Interrupt Descriptor Table
     core::setup_idt();
