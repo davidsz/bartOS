@@ -42,7 +42,6 @@ bool is_aligned(void *address)
     return (uint32_t)address % PAGE_SIZE == 0;
 }
 
-// TODO: Do we care about deallocation?
 uint32_t *new_directory(uint8_t flags)
 {
     // Allocate page directory
@@ -62,6 +61,16 @@ uint32_t *new_directory(uint8_t flags)
         directory[i] = (uint32_t)entry | flags | IS_WRITEABLE;
     }
     return directory;
+}
+
+void free_directory(uint32_t *directory)
+{
+    for (int i = 0; i < TOTAL_ENTRIES_PER_DIRECTORY; i++) {
+        uint32_t entry = directory[i];
+        uint32_t *table = (uint32_t *)(entry & 0xfffff000);
+        free(table);
+    }
+    free(directory);
 }
 
 void switch_directory(uint32_t *directory)

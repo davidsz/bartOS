@@ -20,6 +20,7 @@ enum Flags : uint8_t {
 
 bool is_aligned(void *address);
 uint32_t *new_directory(uint8_t flags);
+void free_directory(uint32_t * directory);
 void switch_directory(uint32_t *directory);
 int set_table_entry(uint32_t *directory, void *v_address, uint32_t value);
 void enable();
