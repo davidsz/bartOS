@@ -1,6 +1,8 @@
-#include "paging.h"
 #include "heap.h"
+#include "log.h"
+#include "paging.h"
 #include "status.h"
+#include <cstdint>
 
 // Structure of virtual addresses:
 // bit 31-22: Page directory index
@@ -42,6 +44,13 @@ bool is_aligned(void *address)
     return (uint32_t)address % PAGE_SIZE == 0;
 }
 
+void *align(void *address)
+{
+    if (!is_aligned(address))
+        return (void *)((uint32_t)address + PAGE_SIZE - ((uint32_t)address % PAGE_SIZE));
+    return address;
+}
+
 uint32_t *new_directory(uint8_t flags)
 {
     // Allocate page directory
@@ -79,21 +88,58 @@ void switch_directory(uint32_t *directory)
     s_currentDirectory = directory;
 }
 
-int set_table_entry(uint32_t *directory, void *v_address, uint32_t value)
+void map(uint32_t *directory, void *virt, void *phys, int flags)
 {
-    if (!is_aligned(v_address))
-        return Status::E_INVALID_ARGUMENT;
+    set_table_entry(directory, virt, (uint32_t)phys | flags);
+}
+
+void map_range(uint32_t *directory, void *virt, void *phys, size_t page_count, int flags)
+{
+    if (!is_aligned(virt) || !is_aligned(phys)) {
+        log::error("paging::map_range: Addresses must be aligned\n");
+        return;
+    }
+
+    uint32_t physical_address = (uint32_t)phys;
+    uint32_t virtual_address = (uint32_t)virt;
+    for (size_t i = 0; i < page_count; i++) {
+        map(directory, (void *)virtual_address, (void *)physical_address, flags);
+        virtual_address += PAGE_SIZE;
+        physical_address += PAGE_SIZE;
+    }
+}
+
+void map_from_to(uint32_t *directory, void *virt, void *phys, void *phys_end, uint8_t flags)
+{
+    if (!is_aligned(virt) || !is_aligned(phys) || !is_aligned(phys_end)) {
+        log::error("paging::map_from_to: Addresses must be aligned\n");
+        return;
+    }
+
+    if ((uint32_t)phys_end < (uint32_t)phys) {
+        log::error("paging::map_from_to: End address must be greater than start address\n");
+        return;
+    }
+
+    uint32_t total_bytes = (uint32_t)phys_end - (uint32_t)phys;
+    int total_pages = total_bytes / PAGE_SIZE;
+    map_range(directory, virt, phys, total_pages, flags);
+}
+
+void set_table_entry(uint32_t *directory, void *virt, uint32_t value)
+{
+    if (!is_aligned(virt)) {
+        log::error("paging::set_table_entry: Address must be aligned\n");
+        return;
+    }
 
     uint32_t directory_index = 0;
     uint32_t table_index = 0;
-    int res = get_indexes(v_address, &directory_index, &table_index);
-    if (res < 0)
-        return res;
+    get_indexes(virt, &directory_index, &table_index);
 
     uint32_t entry = directory[directory_index];
     uint32_t *table = (uint32_t *)(entry & 0xfffff000);
     table[table_index] = value;
-    return Status::ALL_OK;
 }
 
 void enable()

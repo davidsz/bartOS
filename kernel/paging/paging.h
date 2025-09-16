@@ -2,6 +2,7 @@
 #define PAGING_PAGING_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 // Implementation of paging and virtual memory
@@ -19,10 +20,17 @@ enum Flags : uint8_t {
 };
 
 bool is_aligned(void *address);
+void *align(void *address);
+
+// TODO: Directory can be a class
 uint32_t *new_directory(uint8_t flags);
 void free_directory(uint32_t * directory);
 void switch_directory(uint32_t *directory);
-int set_table_entry(uint32_t *directory, void *v_address, uint32_t value);
+void map_from_to(uint32_t *directory, void *virt, void *phys, void *phys_end, uint8_t flags);
+void map_range(uint32_t *directory, void *virt, void *phys, size_t page_count, int flags);
+void map(uint32_t *directory, void *virt, void *phys, int flags);
+void set_table_entry(uint32_t *directory, void *virt, uint32_t value);
+
 void enable();
 
 }; // namespace paging
