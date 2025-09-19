@@ -37,6 +37,7 @@ int init_task(Task *task)
 
     task->registers.ip = PROGRAM_VIRTUAL_ADDRESS;
     task->registers.ss = USER_DATA_SELECTOR;
+    task->registers.cs = USER_CODE_SELECTOR;
     task->registers.esp = PROGRAM_VIRTUAL_STACK_ADDRESS_START;
 
     return Status::ALL_OK;
@@ -80,6 +81,28 @@ Task *next_task()
     if (!s_currentTask->next)
         return s_taskHead;
     return s_currentTask->next;
+}
+
+void switch_to(Task *task)
+{
+    s_currentTask = task;
+    paging::switch_directory(task->page_directory);
+}
+
+void return_to_current_task()
+{
+    change_data_segment(USER_DATA_SELECTOR);
+    switch_to(s_currentTask);
+}
+
+void run_first()
+{
+    if (!s_currentTask) {
+        log::error("run_first: no task\n");
+        return;
+    }
+    switch_to(s_taskHead);
+    restore_task(&s_taskHead->registers);
 }
 
 Task::~Task()
