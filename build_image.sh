@@ -84,6 +84,11 @@ EOF
     cat <<EOF > /mnt/d/another.txt
 Another file for testing.
 EOF
+
+    # Add some runnable applications
+    make user_programs
+    cp -r user_programs/build/blank/blank.bin /mnt/d/blank.bin
+
     umount /mnt/d
 
     echo "Image is done: $IMG"

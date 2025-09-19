@@ -15,7 +15,9 @@ CFLAGS   := -c -g -O0 -ffreestanding -Wall -Wextra -Werror -fno-builtin -nostdli
 CC_INCL  := -I$(KERNEL_SRC) -I$(LIB_INCLUDE)
 LD       := i686-elf-ld
 
-all: kernel.elf kernel.bin bootloader
+.PHONY: all bootloader user_programs
+
+all: kernel.elf kernel.bin bootloader user_programs
 
 # Lib
 LIB_SOURCES := $(shell find $(LIB_SRC) -name '*.cpp')
@@ -66,5 +68,10 @@ $(KERNEL_BUILD)/%_s.o: $(KERNEL_SRC)/%.s
 	mkdir -p $(@D)
 	$(AS) $(ASFLAGS) $< -o $@
 
+# User programs
+user_programs:
+	make -C user_programs
+
 clean:
 	rm -rf $(BUILDDIR)/*
+	make -C user_programs clean
