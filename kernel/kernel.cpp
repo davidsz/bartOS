@@ -9,6 +9,8 @@
 #include "output/serial.h"
 #include "paging/paging.h"
 #include "segmentation/gdt.h"
+#include "task/process.h"
+#include "task/task.h"
 
 // Lib
 #include "block_allocator.h"
@@ -97,6 +99,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     // Initialize disks
     disk::search_and_init_all();
 
+#if 0
     // Test file handling
     int fd = core::fopen("0:/file.txt", "r");
     if (fd >= 0) {
@@ -126,6 +129,15 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
         console::print("\n---\n");
         core::fclose(fd2);
     }
+#endif
+
+    task::Process process;
+    int res = process.Load("0:/blank.bin");
+    console::print("blank.bin returned with %d\n", res);
+
+    task::run_first();
+
+    console::print("blank.bin finished running\n");
 
     // TODO: Implement an exit condition
     while (true);

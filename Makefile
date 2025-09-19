@@ -17,7 +17,7 @@ LD       := i686-elf-ld
 
 .PHONY: all bootloader user_programs
 
-all: kernel.elf kernel.bin bootloader user_programs
+all: kernel.elf kernel.bin kernel_debug bootloader user_programs
 
 # Lib
 LIB_SOURCES := $(shell find $(LIB_SRC) -name '*.cpp')
@@ -59,6 +59,9 @@ kernel.elf: $(KERNEL_OBJECTS)
 
 kernel.bin: $(KERNEL_OBJECTS)
 	$(LD) -T link_bin.ld $(KERNEL_OBJECTS) $(LIB_TARGET) -o $(BUILDDIR)/kernel.bin
+
+kernel_debug: $(KERNEL_OBJECTS)
+	$(LD) -g -relocatable $(KERNEL_OBJECTS) -o $(BUILDDIR)/kernel_debug.o
 
 $(KERNEL_BUILD)/%_cpp.o: $(KERNEL_SRC)/%.cpp $(LIB_TARGET)
 	mkdir -p $(@D)

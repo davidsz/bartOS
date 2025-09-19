@@ -28,8 +28,8 @@ Process *Process::Get(uint16_t id)
 int Process::LoadBinary(const String &filename)
 {
     int fd = core::fopen(filename.c_str(), "r");
-    if (!fd) {
-        log::error("Process::LoadBinary: Failed to open file %s\n", filename.c_str());
+    if (fd < 0) {
+        log::error("Process::LoadBinary: Failed to open file %s (%d)\n", filename.c_str(), fd);
         return Status::E_INVALID_ARGUMENT;
     }
 
