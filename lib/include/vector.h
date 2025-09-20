@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "heap.h"
 #include "utility.h"
+#include "log.h"
 
 template <typename T>
 class Vector {
@@ -21,12 +22,12 @@ public:
     T &operator[](int index);
     const T &operator[](int index) const;
 
+    void resize(size_t size);
     size_t size() const;
     bool empty() const;
-
-    void push_back(const T &value);
     void reserve(size_t capacity);
     size_t capacity() const;
+    void push_back(const T &value);
     void clear();
 
     class Iterator {
@@ -164,6 +165,21 @@ void Vector<T>::push_back(const T &value)
 }
 
 template <typename T>
+void Vector<T>::resize(size_t size)
+{
+    if (size > m_capacity)
+        reserve(size);
+    if (size > m_size) {
+        for (size_t i = m_size; i < size; i++)
+            m_data[i] = T();
+    } else if (size < m_size) {
+        for (size_t i = size; i < m_size; i++)
+            m_data[i].~T();
+    }
+    m_size = size;
+}
+
+template <typename T>
 size_t Vector<T>::size() const
 {
     return m_size;
@@ -180,7 +196,7 @@ void Vector<T>::reserve(size_t capacity)
 {
     if (capacity <= m_capacity)
         return;
-    T *newData = (T *)malloc(sizeof(T) * capacity);
+    T *newData = (T *)calloc(sizeof(T) * capacity);
     for (size_t i = 0; i < m_size; i++)
         newData[i] = move(m_data[i]);
     delete[] m_data;

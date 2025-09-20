@@ -1,13 +1,14 @@
+#include "kernel.h"
 #include "config.h"
 #include "core/constructors.h"
 #include "core/destructors.h"
 #include "core/idt.h"
+#include "core/kernel_commands.h"
 #include "core/seriallogger.h"
 #include "disk/disk.h"
 #include "disk/filesystem.h"
 #include "output/console.h"
 #include "output/serial.h"
-#include "paging/paging.h"
 #include "segmentation/gdt.h"
 #include "task/process.h"
 #include "task/task.h"
@@ -38,6 +39,10 @@ static BlockAllocator s_allocator(HEAP_BLOCK_SIZE);
 
 // Describes the kernel page directory
 static paging::Directory s_kernelPageDirectory = 0;
+paging::Directory kernel_page_directory()
+{
+    return s_kernelPageDirectory;
+}
 
 // extern "C": Using C-style linking keeps the function name unmodified;
 // otherwise C++ extends the name and we can't call it from assembly.
@@ -72,22 +77,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     // Setup paging
     s_kernelPageDirectory = paging::new_directory(paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
     paging::switch_directory(s_kernelPageDirectory);
-
-#if 0
-    char *ptr = (char *)kalloc(4096);
-    paging::set_table_entry(s_kernelPageDirectory, (void *)0x1000, (uint32_t)ptr | paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
-#endif
-
     paging::enable();
-
-#if 0
-    char *ptr2 = (char *)0x1000;
-    ptr2[0] = 'A';
-    ptr2[1] = 'B';
-    console::print("Address of ptr: %p\nData of ptr: %s\n", ptr, ptr);
-    console::print("Address of ptr2: %p\nData of ptr2: %s\n", ptr2, ptr2);
-    console::print("Mapping %p to %p succeeded.\n", ptr, ptr2);
-#endif
 
     // Interrupts were potentionally disabled by the bootloader
     // since the beginning of protected mode. It's safe to enable them again.
@@ -98,6 +88,9 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 
     // Initialize disks
     disk::search_and_init_all();
+
+    // Register kernel commands
+    core::register_all_kernel_commands();
 
 #if 0
     // Test file handling
@@ -132,8 +125,8 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 #endif
 
     task::Process process;
-    int res = process.Load("0:/blank.bin");
-    console::print("blank.bin returned with %d\n", res);
+    process.Load("0:/blank.bin");
+    console::print("blank.bin loaded, running...\n");
 
     task::run_first();
 

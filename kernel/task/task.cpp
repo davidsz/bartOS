@@ -3,6 +3,7 @@
 #include "log.h"
 #include "paging/paging.h"
 #include "status.h"
+#include "kernel.h"
 
 namespace task {
 
@@ -95,6 +96,12 @@ void return_to_current_task()
     switch_to(s_currentTask);
 }
 
+void return_to_kernel()
+{
+    change_data_segment(KERNEL_DATA_SELECTOR);
+    paging::switch_directory(kernel_page_directory());
+}
+
 void run_first()
 {
     if (!s_currentTask) {
@@ -103,6 +110,20 @@ void run_first()
     }
     switch_to(s_taskHead);
     restore_task(&s_taskHead->registers);
+}
+
+void save_state(Task *task, core::Registers *frame)
+{
+    task->registers = *frame;
+}
+
+void save_current_state(core::Registers *frame)
+{
+    if (!s_currentTask) {
+        log::error("save_current_state: no task\n");
+        return;
+    }
+    save_state(s_currentTask, frame);
 }
 
 Task::~Task()

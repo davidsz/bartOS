@@ -1,8 +1,11 @@
 #include "idt.h"
 #include "config.h"
 #include "io.h"
+#include "kernel_commands.h"
 #include "log.h"
 #include "memory.h"
+#include "registers.h"
+#include "task/task.h"
 #include <stdint.h>
 
 #define PIC1          0x20   // Master PIC
@@ -102,6 +105,17 @@ extern "C" void no_interrupt_handler()
     core::outb(0x20, 0x20); // Tell the PIC that the interrupt is handled
 }
 
+extern "C" void int80h();
+extern "C" void *int80h_handler(uint32_t command, core::Registers *interrupt_frame)
+{
+    void *result = 0;
+    task::return_to_kernel();
+    task::save_current_state(interrupt_frame);
+    result = core::run_kernel_command(command, interrupt_frame);
+    task::return_to_current_task();
+    return result;
+}
+
 void setup_idt()
 {
     // The IDT can have up to 256 entries.
@@ -115,9 +129,10 @@ void setup_idt()
     for (int i = 0; i < TOTAL_INTERRUPTS; i++)
         add_interrupt_descriptor(i, (void *)no_interrupt);
 
-    // Add an entry for example to handle divide by zero
+    // Add an entry for example to handle division by zero
     add_interrupt_descriptor(0, (void *)idt_zero);
     add_interrupt_descriptor(0x21, (void *)int21h);
+    add_interrupt_descriptor(0x80, (void *)int80h);
 
     // Tell the system where IDT is
     s_idtPointer.size = sizeof(s_idt) - 1; // The -1 comes from the IDT specs
