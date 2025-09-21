@@ -30,8 +30,10 @@ extern "C" void paging_enable();
 
 static int get_indexes(void *virtual_address, uint32_t *directory_index_out, uint32_t *table_index_out)
 {
-    if (!paging::is_aligned(virtual_address))
+    if (!paging::is_aligned(virtual_address)) {
+        log::error("paging::get_indexes: virtual_address must be aligned\n");
         return Status::E_INVALID_ARGUMENT;
+    }
     *directory_index_out = ((uint32_t)virtual_address / (TOTAL_ENTRIES_PER_DIRECTORY * PAGE_SIZE));
     *table_index_out = ((uint32_t) virtual_address % (TOTAL_ENTRIES_PER_TABLE * PAGE_SIZE) / PAGE_SIZE);
     return Status::ALL_OK;
@@ -128,18 +130,30 @@ void map_from_to(uint32_t *directory, void *virt, void *phys, void *phys_end, ui
 
 void set_table_entry(uint32_t *directory, void *virt, uint32_t value)
 {
-    if (!is_aligned(virt)) {
-        log::error("paging::set_table_entry: Address must be aligned\n");
-        return;
-    }
-
     uint32_t directory_index = 0;
     uint32_t table_index = 0;
-    get_indexes(virt, &directory_index, &table_index);
+    if (get_indexes(virt, &directory_index, &table_index) != Status::ALL_OK) {
+        log::error("paging::set_table_entry: Could not get indexes\n");
+        return;
+    }
 
     uint32_t entry = directory[directory_index];
     uint32_t *table = (uint32_t *)(entry & 0xfffff000);
     table[table_index] = value;
+}
+
+uint32_t get_table_entry(uint32_t *directory, void *virt)
+{
+    uint32_t directory_index = 0;
+    uint32_t table_index = 0;
+    if (get_indexes(virt, &directory_index, &table_index) != Status::ALL_OK) {
+        log::error("paging::get_table_entry: Could not get indexes\n");
+        return 0;
+    }
+
+    uint32_t entry = directory[directory_index];
+    uint32_t *table = (uint32_t *)(entry & 0xfffff000);
+    return table[table_index];
 }
 
 void enable()

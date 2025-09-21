@@ -5,6 +5,7 @@
 #include "log.h"
 #include "paging/paging.h"
 #include "status.h"
+#include <cstdint>
 
 namespace task {
 
@@ -79,7 +80,11 @@ int Process::MapBinary()
 
 int Process::MapMemory()
 {
-    return MapBinary();
+    int res = MapBinary();
+    void *end_address = paging::align((void *)((uint32_t)m_stack + PROGRAM_STACK_SIZE));
+    uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
+    paging::map_from_to(m_task->page_directory, (void *)PROGRAM_VIRTUAL_STACK_ADDRESS_END, m_stack, end_address, flags);
+    return res;
 }
 
 int Process::Load(const String &filename)

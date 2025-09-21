@@ -87,12 +87,12 @@ Task *next_task()
 void switch_to(Task *task)
 {
     s_currentTask = task;
+    change_data_segment(USER_DATA_SELECTOR);
     paging::switch_directory(task->page_directory);
 }
 
 void return_to_current_task()
 {
-    change_data_segment(USER_DATA_SELECTOR);
     switch_to(s_currentTask);
 }
 
@@ -124,6 +124,18 @@ void save_current_state(core::Registers *frame)
         return;
     }
     save_state(s_currentTask, frame);
+}
+
+void *get_stack_item(Task *task, uint32_t index)
+{
+    void* result = 0;
+    uint32_t *stack_pointer = (uint32_t *)task->registers.esp;
+
+    switch_to(task);
+    result = (void *)stack_pointer[index];
+    return_to_kernel();
+
+    return result;
 }
 
 Task::~Task()

@@ -21,6 +21,12 @@ SECTIONS
 		*(.text)
 	}
 
+	/* Assembly source code. */
+	.asm : ALIGN(4K)
+	{
+		*(.asm)
+	}
+
 	/* Read-only data. */
 	.rodata BLOCK(4K) : ALIGN(4K)
 	{

@@ -6,11 +6,13 @@
 namespace core {
 
 enum KernelCommand {
-    SUM = 0
+    SUM = 0,
+    PRINT = 1,
 };
 
 typedef void *(*KERNEL_COMMAND)(core::Registers *registers);
 void *kc_sum(core::Registers *);
+void *kc_print(core::Registers *);
 
 void register_all_kernel_commands();
 void register_kernel_command(uint32_t command_id, KERNEL_COMMAND command);

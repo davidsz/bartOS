@@ -37,6 +37,7 @@ void return_to_kernel();
 void run_first();
 void save_state(Task *task, core::Registers *frame);
 void save_current_state(core::Registers *frame);
+void *get_stack_item(Task *task, uint32_t index);
 
 }; // namespace task
 
