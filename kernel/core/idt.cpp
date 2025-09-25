@@ -35,6 +35,8 @@ struct InterruptDescriptor32
 __attribute__((aligned(16))) InterruptDescriptor32 s_idt[TOTAL_INTERRUPTS];
 IdtPointer s_idtPointer;
 
+extern void *interrupt_pointer_table[TOTAL_INTERRUPTS];
+
 /*
 *  Loads the IDT
 *  Defined in idt.s
@@ -89,20 +91,11 @@ void remap_pics()
 
 namespace core {
 
-// TODO: Don't leave these here
 void idt_zero() { }
 
-extern "C" void int21h();
-extern "C" void int21h_handler()
+extern "C" void interrupt_handler(int, core::Registers *)
 {
-    log::info("Keyboard pressed!\n");
-    core::outb(0x20, 0x20); // Tell the PIC that the interrupt is handled
-}
-
-extern "C" void no_interrupt();
-extern "C" void no_interrupt_handler()
-{
-    core::outb(0x20, 0x20); // Tell the PIC that the interrupt is handled
+    core::outb(0x20, 0x20);
 }
 
 extern "C" void int80h();
@@ -124,14 +117,14 @@ void setup_idt()
     // 112-119: IRQs from PIC2 -> We map them to 40-47 for the sake of order
     remap_pics();
 
-    // Null the whole IDT out and fill with empty handlers
+    // Fill the IDT with references to the generic interrupt handler
     memset(s_idt, 0, sizeof(s_idt));
     for (int i = 0; i < TOTAL_INTERRUPTS; i++)
-        add_interrupt_descriptor(i, (void *)no_interrupt);
+        add_interrupt_descriptor(i, interrupt_pointer_table[i]);
 
     // Add an entry for example to handle division by zero
     add_interrupt_descriptor(0, (void *)idt_zero);
-    add_interrupt_descriptor(0x21, (void *)int21h);
+    // 0x80 handles kernel commands
     add_interrupt_descriptor(0x80, (void *)int80h);
 
     // Tell the system where IDT is
