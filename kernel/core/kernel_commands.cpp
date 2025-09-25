@@ -8,8 +8,6 @@
 
 namespace core {
 
-// FIXME: Global constructors are called before initializing the heap
-// so Vector's capacity needs to be reserved manually before using it
 static Vector<KERNEL_COMMAND> s_kernelCommands;
 
 // TODO: This could be more generic, like copy_bytes_from_task
@@ -48,7 +46,6 @@ void register_kernel_command(uint32_t id, KERNEL_COMMAND command)
 
 void register_all_kernel_commands()
 {
-    s_kernelCommands.resize(32);
     register_kernel_command(KernelCommand::SUM, kc_sum);
     register_kernel_command(KernelCommand::PRINT, kc_print);
 }

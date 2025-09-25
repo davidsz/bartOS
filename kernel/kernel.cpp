@@ -32,11 +32,6 @@
 extern "C" void *__dso_handle;
 void *__dso_handle = nullptr;
 
-static core::SerialLogger s_logger;
-
-// Will handle heap allocations
-static BlockAllocator s_allocator(HEAP_BLOCK_SIZE);
-
 // Describes the kernel page directory
 static paging::Directory s_kernelPageDirectory = 0;
 paging::Directory kernel_page_directory()
@@ -49,6 +44,12 @@ paging::Directory kernel_page_directory()
 // (called by kernel.s)
 extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 {
+    // Initialize heap and support allocation methods before the global constructors are called,
+    // because they can use the heap when allocating their members.
+    BlockAllocator allocator(HEAP_BLOCK_SIZE);
+    allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES);
+    set_heap_allocator(&allocator);
+
     // Call constructors of global objects.
     core::call_constructors();
 
@@ -60,13 +61,9 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     if (multiboot_magic == 0x2BADB002)
         console::print("Loaded by a Multiboot compliant bootloader. (%p)\n\n", multiboot_magic);
 
-    log::set_logger(&s_logger);
+    core::SerialLogger logger;
+    log::set_logger(&logger);
     log::info("BartOS supports serial output.\n");
-
-    // Initialize heap and support allocation methods
-    if (s_allocator.Initialize((void *)HEAP_ADDRESS, HEAP_SIZE_BYTES) != Status::ALL_OK)
-        log::error("Failed to initialize the heap allocator.\n");
-    set_heap_allocator(&s_allocator);
 
     // Global Descriptor Table
     segmentation::setup_gdt();
