@@ -10,6 +10,7 @@ namespace task {
 struct Process {
     static Process *Get(uint16_t id);
     static Process *Current();
+    static void Switch(Process *process);
 
     int Load(const String &filename);
 

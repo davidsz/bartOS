@@ -26,6 +26,11 @@ Process *Process::Get(uint16_t id)
     return s_processes[id];
 }
 
+void Process::Switch(Process *process)
+{
+    s_currentProcess = process;
+}
+
 int Process::LoadBinary(const String &filename)
 {
     int fd = core::fopen(filename.c_str(), "r");

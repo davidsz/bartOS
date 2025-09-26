@@ -123,6 +123,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 
     task::Process process;
     process.Load("0:/blank.bin");
+    task::Process::Switch(&process);
     console::print("blank.bin loaded, running...\n");
 
     task::run_first();
