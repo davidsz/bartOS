@@ -93,6 +93,8 @@ void switch_to(Task *task)
 
 void return_to_current_task()
 {
+    if (!s_currentTask)
+        return;
     switch_to(s_currentTask);
 }
 

@@ -6,6 +6,7 @@
 #include "memory.h"
 #include "registers.h"
 #include "task/task.h"
+#include "vector.h"
 #include <stdint.h>
 
 #define PIC1          0x20   // Master PIC
@@ -34,18 +35,13 @@ struct InterruptDescriptor32
 
 __attribute__((aligned(16))) InterruptDescriptor32 s_idt[TOTAL_INTERRUPTS];
 IdtPointer s_idtPointer;
-
-extern void *interrupt_pointer_table[TOTAL_INTERRUPTS];
-
-/*
-*  Loads the IDT
-*  Defined in idt.s
-*
-*  @param IdtPointer filled with address and size
-*/
 extern "C" void idt_load(struct IdtPointer *);
 
-void add_interrupt_descriptor(uint8_t i, void *address)
+extern "C" void *interrupt_pointer_table[TOTAL_INTERRUPTS];
+
+static Vector<core::INTERRUPT_CALLBACK> s_interruptCallbacks;
+
+static void add_interrupt_descriptor(uint8_t i, void *address)
 {
     InterruptDescriptor32 desc;
 
@@ -71,7 +67,7 @@ void add_interrupt_descriptor(uint8_t i, void *address)
     s_idt[i] = desc;
 }
 
-void remap_pics()
+static void remap_pics()
 {
     core::outb(PIC1_COMMAND, 0x11); // Init
     core::outb(PIC2_COMMAND, 0x11);
@@ -91,10 +87,26 @@ void remap_pics()
 
 namespace core {
 
+void register_interrupt_callback(int interrupt, INTERRUPT_CALLBACK interrupt_callback)
+{
+    if (interrupt < 0 || interrupt >= TOTAL_INTERRUPTS) {
+        log::error("register_interrupt_callback: interrupt out of range");
+        return;
+    }
+    s_interruptCallbacks.resize(TOTAL_INTERRUPTS);
+    s_interruptCallbacks[interrupt] = interrupt_callback;
+}
+
 void idt_zero() { }
 
-extern "C" void interrupt_handler(int, core::Registers *)
+extern "C" void interrupt_handler(int interrupt, core::Registers *frame)
 {
+    task::return_to_kernel();
+    if (s_interruptCallbacks[interrupt]) {
+        task::save_current_state(frame);
+        s_interruptCallbacks[interrupt](frame);
+    }
+    task::return_to_current_task();
     core::outb(0x20, 0x20);
 }
 
