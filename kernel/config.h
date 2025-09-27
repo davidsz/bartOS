@@ -26,6 +26,8 @@
 // The most frequently used sector size
 #define SECTOR_SIZE 512
 
+#define KEYBOARD_BUFFER_SIZE 1024
+
 // User land
 #define PROGRAM_VIRTUAL_ADDRESS 0x400000
 #define PROGRAM_STACK_SIZE 1024 * 16

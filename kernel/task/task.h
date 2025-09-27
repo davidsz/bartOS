@@ -6,6 +6,8 @@
 
 namespace task {
 
+class Process;
+
 // TODO: Implement as a well-formatted class
 struct Task {
     ~Task();
@@ -16,6 +18,9 @@ struct Task {
     // The registers of the task when the task is not running
     core::Registers registers;
 
+    // Not owning reference for the process
+    Process *process = 0;
+
     // The next task in the linked list
     Task *next = 0;
 
@@ -23,7 +28,7 @@ struct Task {
     Task *prev = 0;
 };
 
-Task *new_task();
+Task *new_task(Process *);
 Task *current_task();
 Task *next_task();
 

@@ -12,7 +12,7 @@ static Task *s_currentTask = 0;
 static Task *s_taskTail = 0;
 static Task *s_taskHead = 0;
 
-void remove_from_list(Task *task)
+static void remove_from_list(Task *task)
 {
     if (task->prev)
         task->prev->next = task->next;
@@ -27,7 +27,7 @@ void remove_from_list(Task *task)
         s_currentTask = next_task();
 }
 
-int init_task(Task *task)
+static int init_task(Task *task, Process *process)
 {
     // Map the entire 4 Gb address space to itself
     task->page_directory = paging::new_directory(paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
@@ -35,6 +35,8 @@ int init_task(Task *task)
         log::error("init_task: failed to allocate page directory\n");
         return E_NO_MEMORY;
     }
+
+    task->process = process;
 
     task->registers.ip = PROGRAM_VIRTUAL_ADDRESS;
     task->registers.ss = USER_DATA_SELECTOR;
@@ -44,7 +46,7 @@ int init_task(Task *task)
     return Status::ALL_OK;
 }
 
-Task *new_task()
+Task *new_task(Process *process)
 {
     Task *task = new Task;
     if (!task) {
@@ -52,7 +54,7 @@ Task *new_task()
         return nullptr;
     }
 
-    if (init_task(task) != Status::ALL_OK) {
+    if (init_task(task, process) != Status::ALL_OK) {
         log::error("task_new: failed to initialize task\n");
         delete task;
         return nullptr;

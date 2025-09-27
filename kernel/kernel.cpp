@@ -7,6 +7,7 @@
 #include "core/seriallogger.h"
 #include "disk/disk.h"
 #include "disk/filesystem.h"
+#include "keyboard/keyboard.h"
 #include "output/console.h"
 #include "output/serial.h"
 #include "segmentation/gdt.h"
@@ -61,6 +62,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     if (multiboot_magic == 0x2BADB002)
         console::print("Loaded by a Multiboot compliant bootloader. (%p)\n\n", multiboot_magic);
 
+    // System logging using the serial port
     core::SerialLogger logger;
     log::set_logger(&logger);
     log::info("BartOS supports serial output.\n");
@@ -88,6 +90,9 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 
     // Register kernel commands
     core::register_all_kernel_commands();
+
+    // Add keyboard drivers
+    keyboard::init_all();
 
 #if 0
     // Test file handling

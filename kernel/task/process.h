@@ -3,6 +3,7 @@
 
 #include "string.h"
 #include "task.h"
+#include "keyboard/keyboard.h"
 #include <cstdint>
 
 namespace task {
@@ -13,6 +14,8 @@ struct Process {
     static void Switch(Process *process);
 
     int Load(const String &filename);
+
+    keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
 
 private:
     int LoadData(const String &filename);
@@ -31,6 +34,9 @@ private:
 
     // The memory (malloc) allocations of the process
     // void *allocations[MAX_PROGRAM_ALLOCATIONS];
+
+    // Each process has its own keyboard buffer
+    keyboard::KeyBuffer m_keybuffer;
 
     // The physical pointer to the process memory
     void *m_ptr = 0;

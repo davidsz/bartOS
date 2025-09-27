@@ -106,7 +106,7 @@ int Process::Load(const String &filename)
     }
     m_stack = program_stack;
 
-    m_task = new_task();
+    m_task = new_task(this);
 
     if (int res = MapMemory()) {
         log::error("Process::Load: Failed to map memory (%d)\n", res);
