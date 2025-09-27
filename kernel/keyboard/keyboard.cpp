@@ -44,6 +44,8 @@ void init_all()
 
 void push(char c)
 {
+    if (!c)
+        return;
     // We always push keys for the currently active and visible process
     task::Process *current_process = task::Process::Current();
     if (!current_process)

@@ -1,4 +1,5 @@
 #include "kernel_commands.h"
+#include "keyboard/keyboard.h"
 #include "log.h"
 #include "output/console.h"
 #include "paging/paging.h"
@@ -48,6 +49,8 @@ void register_all_kernel_commands()
 {
     register_kernel_command(KernelCommand::SUM, kc_sum);
     register_kernel_command(KernelCommand::PRINT, kc_print);
+    register_kernel_command(KernelCommand::GETKEY, kc_getkey);
+    register_kernel_command(KernelCommand::PUTCHAR, kc_putchar);
 }
 
 void *run_kernel_command(uint32_t id, core::Registers *registers)
@@ -73,6 +76,19 @@ void *kc_print(core::Registers *)
     char buf[1024];
     copy_string_from_task(task::current_task(), user_space_msg_addr, buf, sizeof(buf));
     console::print(buf);
+    return 0;
+}
+
+void *kc_getkey(core::Registers *)
+{
+    char c = keyboard::pop();
+    return (void *)((int)c);
+}
+
+void *kc_putchar(core::Registers *)
+{
+    int c = (char)(int)task::get_stack_item(task::current_task(), 0);
+    console::print("%c", c);
     return 0;
 }
 

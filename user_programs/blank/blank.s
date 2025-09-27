@@ -5,21 +5,27 @@ section .asm
 global _start
 
 _start:
-    ; Put two arguments to the stack
-    push 20
-    push 30
-    ; Calling kernel command 0 (sum) through the interrupt 0x80
-    mov eax, 0
-    int 0x80
-    add esp, 8
-
     push message
     ; Calling kernel command 1 (print)
     mov eax, 1
     int 0x80
     add esp, 4
 
-    jmp $
+_input_output_loop:
+    call getkey
+    push eax     ; The returned char is the argument of putchar
+    mov eax, 3   ; Kernel command 3 (putchar)
+    int 0x80
+    add esp, 4
+    jmp _input_output_loop
+
+getkey:
+    ; Calling kernel command 2 (getkey)
+    mov eax, 2
+    int 0x80
+    cmp eax, 0x00
+    je getkey
+    ret
 
 section .data
-message: db '> I can talk with the kernel!', 0
+message: db '> Your message: ', 0
