@@ -1,4 +1,5 @@
 #include "keyboard.h"
+#include "keyboard_ps2.h"
 #include "list.h"
 #include "task/process.h"
 
@@ -37,8 +38,8 @@ void KeyBuffer::Backspace()
 
 void init_all()
 {
-    // TODO: Add keyboards here
-    init_keyboard(0);
+    // TODO: Ownership of these
+    init_keyboard(new Keyboard_PS2("Classic_PS2"));
 }
 
 void push(char c)
