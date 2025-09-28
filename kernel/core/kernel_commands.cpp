@@ -88,7 +88,10 @@ void *kc_getkey(core::Registers *)
 void *kc_putchar(core::Registers *)
 {
     int c = (char)(int)task::get_stack_item(task::current_task(), 0);
-    console::print("%c", c);
+    if (c == 0x08)
+        console::backspace();
+    else
+        console::print("%c", c);
     return 0;
 }
 

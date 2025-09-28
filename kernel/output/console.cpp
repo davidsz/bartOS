@@ -13,6 +13,7 @@ public:
     void FormatProcessed() override;
 
     void WriteCell(size_t i, char c);
+    void Backspace();
     void StartNewLine();
     void MoveCursor(unsigned short x, unsigned short y);
     void SetConsoleColor(console::Color fg, console::Color bg);
@@ -79,6 +80,28 @@ void FrameBuffer::WriteCell(size_t pos, char c)
     m_frameBufferPtr[pos + 1] = ((m_fgColor & 0x0F) << 4) | (m_bgColor & 0x0F);
 }
 
+void FrameBuffer::Backspace()
+{
+    if (m_x == 0 && m_y == 0)
+        return;
+
+    if (m_x == 0) {
+        m_y--;
+        // Search the last non-space char of the row
+        for (int x = m_width - 1; x >= 0; x--) {
+            size_t pos = m_y * m_width + x;
+            if (m_frameBufferPtr[pos * 2] != ' ') {
+                m_x = x;
+                break;
+            }
+        }
+    } else
+        m_x--;
+
+    WriteCell(m_y * m_width + m_x, ' ');
+    MoveCursor(m_x, m_y);
+}
+
 void FrameBuffer::StartNewLine()
 {
     m_x = 0;
@@ -141,6 +164,11 @@ void print(const char *msg, ...)
 void print(const char *msg, VA_LIST args)
 {
     s_frameBuffer.ProcessFormat(msg, args);
+}
+
+void backspace()
+{
+    s_frameBuffer.Backspace();
 }
 
 void move_cursor(unsigned short x, unsigned short y)

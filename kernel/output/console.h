@@ -30,6 +30,7 @@ enum Color : short int {
 
 void print(const char *msg, ...);
 void print(const char *msg, VA_LIST);
+void backspace();
 void move_cursor(unsigned short x, unsigned short y);
 void set_color(Color fg, Color bg);
 void clear();

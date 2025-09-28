@@ -24,6 +24,7 @@ class KeyBuffer {
 public:
     void Push(char c);
     char Pop();
+    // TODO: Is this needed?
     void Backspace();
 private:
     int m_tail = 0; // Position where we push chars
