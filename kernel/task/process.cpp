@@ -1,10 +1,13 @@
 #include "process.h"
 #include "config.h"
-#include "disk/file.h"
 #include "heap.h"
+#include "loader/binary.h"
+#include "loader/elf_file.h"
+#include "loader/loader.h"
 #include "log.h"
 #include "paging/paging.h"
 #include "status.h"
+#include "task.h"
 #include <cstdint>
 
 namespace task {
@@ -31,55 +34,16 @@ void Process::Switch(Process *process)
     s_currentProcess = process;
 }
 
-int Process::LoadBinary(const String &filename)
-{
-    int fd = core::fopen(filename.c_str(), "r");
-    if (fd < 0) {
-        log::error("Process::LoadBinary: Failed to open file %s (%d)\n", filename.c_str(), fd);
-        return Status::E_INVALID_ARGUMENT;
-    }
-
-    filesystem::FileStat stat;
-    if (int res = core::fstat(fd, &stat)) {
-        log::error("Process::LoadBinary: Failed to stat file %s\n", filename.c_str());
-        core::fclose(fd);
-        return res;
-    }
-
-    void *program_data = malloc(stat.size);
-    if (!program_data) {
-        log::error("Process::LoadBinary: Failed to allocate memory for %s\n", filename.c_str());
-        core::fclose(fd);
-        return Status::E_NO_MEMORY;
-    }
-
-    if (core::fread(program_data, stat.size, 1, fd) != 1) {
-        log::error("Process::LoadBinary: Failed to read file %s\n", filename.c_str());
-        free(program_data);
-        core::fclose(fd);
-        return Status::E_IO;
-    }
-
-    m_ptr = program_data;
-    m_size = stat.size;
-    return Status::ALL_OK;
-}
-
-int Process::LoadData(const String &filename)
-{
-    return LoadBinary(filename);
-}
-
 int Process::MapBinary()
 {
-    if (!m_task || !m_ptr || !m_size) {
+    if (!m_task || !m_binary->memoryAddress() || !m_binary->memorySize()) {
         log::error("Process::MapBinary: Invalid process\n");
         return Status::E_INVALID_ARGUMENT;
     }
 
-    void *end_address = paging::align((void *)((uint32_t)m_ptr + m_size));
+    void *end_address = paging::align((void *)((uint32_t)m_binary->memoryAddress() + m_binary->memorySize()));
     uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
-    paging::map_from_to(m_task->page_directory, (void *)PROGRAM_VIRTUAL_ADDRESS, m_ptr, end_address, flags);
+    paging::map_from_to(m_task->page_directory, (void *)PROGRAM_VIRTUAL_ADDRESS, m_binary->memoryAddress(), end_address, flags);
     return Status::ALL_OK;
 }
 
@@ -94,9 +58,10 @@ int Process::MapMemory()
 
 int Process::Load(const String &filename)
 {
-    if (int res = LoadData(filename)) {
-        log::error("Process::Load: Failed to load data (%d)\n", res);
-        return res;
+    m_binary = loader::LoadFile(filename);
+    if (!m_binary) {
+        log::error("Process::Load: Failed to load file (%s)\n", filename);
+        return Status::E_IO;
     }
 
     void *program_stack = calloc(PROGRAM_STACK_SIZE);

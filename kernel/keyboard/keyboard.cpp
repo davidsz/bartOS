@@ -2,6 +2,7 @@
 #include "keyboard_ps2.h"
 #include "list.h"
 #include "task/process.h"
+#include "task/task.h"
 
 static List<keyboard::IKeyboard *> s_keyboards;
 

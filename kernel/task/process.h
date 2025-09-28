@@ -2,13 +2,19 @@
 #define TASK_PROCESS_H
 
 #include "string.h"
-#include "task.h"
 #include "keyboard/keyboard.h"
 #include <cstdint>
 
+namespace loader {
+class Binary;
+}
+
 namespace task {
 
-struct Process {
+struct Task;
+
+class Process {
+public:
     static Process *Get(uint16_t id);
     static Process *Current();
     static void Switch(Process *process);
@@ -18,8 +24,6 @@ struct Process {
     keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
 
 private:
-    int LoadData(const String &filename);
-    int LoadBinary(const String &filename);
     int MapMemory();
     int MapBinary();
 
@@ -38,11 +42,8 @@ private:
     // Each process has its own keyboard buffer
     keyboard::KeyBuffer m_keybuffer;
 
-    // The physical pointer to the process memory
-    void *m_ptr = 0;
-
-    // The size of the data pointed by "ptr"
-    uint32_t m_size = 0;
+    // The executable for this process
+    loader::Binary *m_binary = 0;
 
     // The physical pointer to the stack memory
     void *m_stack = 0;
