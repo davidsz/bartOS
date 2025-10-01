@@ -21,6 +21,7 @@ enum Flags : uint8_t {
 
 bool is_aligned(void *address);
 void *align(void *address);
+void *align_to_lower(void *address);
 
 // TODO: Directory can be a class
 uint32_t *new_directory(uint8_t flags);

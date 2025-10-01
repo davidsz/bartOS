@@ -53,6 +53,11 @@ void *align(void *address)
     return address;
 }
 
+void *align_to_lower(void *address)
+{
+    return (void *)((uint32_t)address - (uint32_t)address % PAGE_SIZE);
+}
+
 uint32_t *new_directory(uint8_t flags)
 {
     // Allocate page directory

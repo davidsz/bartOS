@@ -5,6 +5,8 @@
 
 namespace loader {
 
+struct elf_header;
+
 class ELF_File : public Binary
 {
 public:
@@ -13,13 +15,13 @@ public:
 
     virtual ~ELF_File();
 
+    void *entryAddress() override;
+    elf_header *elfHeader() { return m_header; }
+
 private:
     ELF_File(const String &filename, void *program_data, size_t size);
 
-    void *m_virtualBaseAddress;
-    void *m_virtualEndAddress;
-    void *m_physicalBaseAddress;
-    void *m_physicalEndAddress;
+    elf_header *m_header;
 };
 
 } // namespace loader

@@ -1,7 +1,10 @@
 #include "loader.h"
+#include "config.h"
 #include "disk/file.h"
-#include "log.h"
+#include "elf.h"
 #include "elf_file.h"
+#include "log.h"
+#include "paging/paging.h"
 
 namespace loader {
 
@@ -34,13 +37,41 @@ Binary *LoadFile(const String &filename)
         return nullptr;
     }
 
-    Binary *result = 0;
-    if (ELF_File::HasValidFormat(program_data))
-        result = ELF_File::FromLoaded(filename, program_data, stat.size);
-    else
+    Binary *result = ELF_File::FromLoaded(filename, program_data, stat.size);
+    if (!result)
         result = Binary::FromLoaded(filename, program_data, stat.size);
-
     return result;
+}
+
+int MapRawBinary(uint32_t *directory, Binary *binary)
+{
+    if (!binary->memoryAddress() || !binary->memorySize()) {
+        log::error("Loader::MapRawBinary: Invalid argument\n");
+        return Status::E_INVALID_ARGUMENT;
+    }
+
+    void *end_address = paging::align((void *)((uint32_t)binary->memoryAddress() + binary->memorySize()));
+    uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
+    paging::map_from_to(directory, (void *)PROGRAM_VIRTUAL_ADDRESS, binary->memoryAddress(), end_address, flags);
+    return Status::ALL_OK;
+}
+
+int MapElfBinary(uint32_t *directory, ELF_File *elf)
+{
+    elf_header *header = elf->elfHeader();
+    elf32_phdr *program_header = (elf32_phdr *)((uint32_t)header + header->e_phoff);
+    for (int i = 0; i < header->e_phnum; i++) {
+        void *virtual_addr = paging::align_to_lower((void *)program_header->p_vaddr);
+        void *physical_addr = (void *)((uint32_t)header + program_header->p_offset);
+        void *physical_begin = paging::align_to_lower(physical_addr);
+        void *physical_end = paging::align((void *)((uint32_t)physical_addr + program_header->p_filesz));
+        int flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL;
+        if (program_header->p_flags & PF_W)
+            flags |= paging::IS_WRITEABLE;
+        paging::map_from_to(directory, virtual_addr, physical_begin, physical_end, flags);
+        program_header++;
+    }
+    return Status::ALL_OK;
 }
 
 }; // namespace loader

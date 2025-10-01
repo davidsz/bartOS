@@ -87,7 +87,7 @@ EOF
 
     # Add some runnable applications
     make user_programs
-    cp -r user_programs/build/blank/blank.bin /mnt/d/blank.bin
+    cp -r user_programs/build/blank/blank.elf /mnt/d/blank.elf
 
     umount /mnt/d
 

@@ -16,6 +16,7 @@ public:
     static Binary *FromLoaded(const String &filename, void *program_data, size_t size);
 
     virtual ~Binary();
+    virtual void *entryAddress();
 
     String filename() { return m_filename; }
     Format format() { return m_format; }
@@ -26,11 +27,9 @@ protected:
     Binary(const String &filename, void *program_data, size_t size);
 
     String m_filename;
-
     // The physical memory address that this executable file is loaded at
-    void *m_memoryAddress;
-    int m_memorySize;
-
+    void *m_memoryAddress = 0;
+    int m_memorySize = 0;
     Format m_format;
 };
 

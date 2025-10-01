@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+namespace loader {
+
 #define PF_X 0x01
 #define PF_W 0x02
 #define PF_R 0x04
@@ -122,5 +124,7 @@ struct elf32_sym
     unsigned char st_other;
     elf32_half st_shndx;
 } __attribute__((packed));
+
+}; // namespace loader
 
 #endif // LOADER_ELF_H

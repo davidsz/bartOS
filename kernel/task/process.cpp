@@ -34,22 +34,22 @@ void Process::Switch(Process *process)
     s_currentProcess = process;
 }
 
-int Process::MapBinary()
-{
-    if (!m_task || !m_binary->memoryAddress() || !m_binary->memorySize()) {
-        log::error("Process::MapBinary: Invalid process\n");
-        return Status::E_INVALID_ARGUMENT;
-    }
-
-    void *end_address = paging::align((void *)((uint32_t)m_binary->memoryAddress() + m_binary->memorySize()));
-    uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
-    paging::map_from_to(m_task->page_directory, (void *)PROGRAM_VIRTUAL_ADDRESS, m_binary->memoryAddress(), end_address, flags);
-    return Status::ALL_OK;
-}
-
 int Process::MapMemory()
 {
-    int res = MapBinary();
+    int res = Status::ALL_OK;
+    switch (m_binary->format()) {
+    case loader::Binary::RawBinary:
+        res = loader::MapRawBinary(m_task->page_directory, m_binary);
+        break;
+    case loader::Binary::Elf:
+        res = loader::MapElfBinary(m_task->page_directory, (loader::ELF_File *)m_binary);
+        break;
+    default:
+        log::error("Process::MapMemory: Invalid binary format\n");
+        return Status::E_IO;
+    }
+
+    // Map the stack
     void *end_address = paging::align((void *)((uint32_t)m_stack + PROGRAM_STACK_SIZE));
     uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
     paging::map_from_to(m_task->page_directory, (void *)PROGRAM_VIRTUAL_STACK_ADDRESS_END, m_stack, end_address, flags);

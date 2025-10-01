@@ -22,10 +22,10 @@ public:
     int Load(const String &filename);
 
     keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
+    loader::Binary *Binary() { return m_binary; }
 
 private:
     int MapMemory();
-    int MapBinary();
 
     // The process ID
     uint16_t m_id = -1;

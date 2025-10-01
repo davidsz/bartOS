@@ -127,13 +127,13 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 #endif
 
     task::Process process;
-    process.Load("0:/blank.bin");
+    process.Load("0:/blank.elf");
     task::Process::Switch(&process);
-    console::print("blank.bin loaded, running...\n");
+    console::print("blank.elf loaded, running...\n");
 
     task::run_first();
 
-    console::print("blank.bin finished running\n");
+    console::print("blank.elf finished running\n");
 
     // TODO: Implement an exit condition
     while (true);

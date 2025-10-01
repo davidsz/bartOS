@@ -1,9 +1,11 @@
 #include "task.h"
 #include "config.h"
+#include "kernel.h"
+#include "loader/binary.h"
 #include "log.h"
 #include "paging/paging.h"
+#include "process.h"
 #include "status.h"
-#include "kernel.h"
 
 namespace task {
 
@@ -38,7 +40,7 @@ static int init_task(Task *task, Process *process)
 
     task->process = process;
 
-    task->registers.ip = PROGRAM_VIRTUAL_ADDRESS;
+    task->registers.ip = (uint32_t)process->Binary()->entryAddress();
     task->registers.ss = USER_DATA_SELECTOR;
     task->registers.cs = USER_CODE_SELECTOR;
     task->registers.esp = PROGRAM_VIRTUAL_STACK_ADDRESS_START;
