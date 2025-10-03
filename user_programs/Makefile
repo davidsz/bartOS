@@ -1,4 +1,4 @@
-SUBDIRS := blank
+SUBDIRS := libc blank
 BUILDDIR := build
 
 .PHONY: all $(SUBDIRS) clean
