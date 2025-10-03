@@ -1,8 +1,9 @@
 #ifndef TASK_PROCESS_H
 #define TASK_PROCESS_H
 
-#include "string.h"
 #include "keyboard/keyboard.h"
+#include "list.h"
+#include "string.h"
 #include <cstdint>
 
 namespace loader {
@@ -20,11 +21,18 @@ public:
     static void Switch(Process *process);
 
     int Load(const String &filename);
+    void *Allocate(size_t size);
+    void Deallocate(void *ptr);
 
     keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
     loader::Binary *Binary() { return m_binary; }
 
 private:
+    struct Allocation {
+        void *ptr;
+        size_t size;
+    };
+
     int MapMemory();
 
     // The process ID
@@ -37,7 +45,7 @@ private:
     Task *m_task = 0;
 
     // The memory (malloc) allocations of the process
-    // void *allocations[MAX_PROGRAM_ALLOCATIONS];
+    List<Allocation> m_allocations;
 
     // Each process has its own keyboard buffer
     keyboard::KeyBuffer m_keybuffer;

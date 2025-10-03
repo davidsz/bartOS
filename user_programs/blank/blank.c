@@ -1,7 +1,15 @@
 #include "stdio.h"
+#include "stdlib.h"
+#include "cstring.h"
 
 int main(int, char **)
 {
-    print("WEEEEEE!\n");
+    char *ptr = (char *)malloc(20);
+    strcpy(ptr, "WEEEeeeEEEEeeeEEE!");
+    print(ptr);
+    free(ptr);
+
+    while(1);
+
     return 0;
 }

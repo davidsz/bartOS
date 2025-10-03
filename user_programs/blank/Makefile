@@ -2,7 +2,7 @@ SRC_DIR       := .
 
 CC            := i686-elf-gcc
 INCLUDES      := $(BUILDDIR)/../libc/include
-CFLAGS        := -I$(INCLUDES) -std=gnu99 -c
+CFLAGS        := -I$(INCLUDES) -std=gnu99 -nostdlib -c
 
 SOURCES  := $(shell find $(SRC_DIR) -name '*.c')
 OBJECTS  := $(patsubst $(SRC_DIR)/%.c,$(BUILDDIR)/%_c.o,$(SOURCES))

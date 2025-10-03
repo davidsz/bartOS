@@ -9,5 +9,6 @@ print:
     push dword[ebp+8]
     mov eax, 1
     int 0x80
+    add esp, 4
     pop ebp
     ret

@@ -53,10 +53,34 @@ public:
         bool operator!=(const Iterator &other) const {
             return m_current != other.m_current;
         }
+
+        friend class List;
     };
 
     Iterator begin() { return Iterator(m_head); }
     Iterator end() { return Iterator(nullptr); }
+    Iterator erase(Iterator iter) {
+        if (m_head == nullptr || iter.m_current == nullptr)
+            return end();
+
+        if (m_head == iter.m_current) {
+            Node *nextNode = m_head->next;
+            delete m_head;
+            m_head = nextNode;
+            return Iterator(m_head);
+        }
+
+        Node *prev = m_head;
+        while (prev->next && prev->next != iter.m_current)
+            prev = prev->next;
+
+        if (prev->next == nullptr)
+            return end();
+
+        prev->next = iter.m_current->next;
+        delete iter.m_current;
+        return Iterator(prev->next);
+    }
 };
 
 template <typename T>

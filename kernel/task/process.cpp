@@ -85,4 +85,37 @@ int Process::Load(const String &filename)
     return Status::ALL_OK;
 }
 
+void *Process::Allocate(size_t size)
+{
+    void *ptr = malloc(size);
+    if (!ptr) {
+        log::warning("Process::Allocate: Failed to allocate memory (%d bytes)\n", size);
+        return 0;
+    }
+
+    void *end_address = paging::align((void *)((uint32_t)ptr + size));
+    int flags = paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL;
+    paging::map_from_to(m_task->page_directory, ptr, ptr, end_address, flags);
+
+    m_allocations.push_back({
+        .ptr = ptr,
+        .size = size
+    });
+    return ptr;
+}
+
+void Process::Deallocate(void *ptr)
+{
+    for (auto it = m_allocations.begin(); it != m_allocations.end(); it++) {
+        if (it->ptr == ptr) {
+            void *end_address = paging::align((void *)((uint32_t)it->ptr + it->size));
+            paging::map_from_to(m_task->page_directory, it->ptr, it->ptr, end_address, 0x00);
+
+            free(it->ptr);
+            m_allocations.erase(it);
+            return;
+        }
+    }
+}
+
 } // namespace task

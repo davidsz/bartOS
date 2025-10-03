@@ -4,6 +4,7 @@
 #include "output/console.h"
 #include "paging/paging.h"
 #include "string.h"
+#include "task/process.h"
 #include "task/task.h"
 #include "vector.h"
 
@@ -51,6 +52,8 @@ void register_all_kernel_commands()
     register_kernel_command(KernelCommand::PRINT, kc_print);
     register_kernel_command(KernelCommand::GETKEY, kc_getkey);
     register_kernel_command(KernelCommand::PUTCHAR, kc_putchar);
+    register_kernel_command(KernelCommand::MALLOC, kc_malloc);
+    register_kernel_command(KernelCommand::FREE, kc_free);
 }
 
 void *run_kernel_command(uint32_t id, core::Registers *registers)
@@ -92,6 +95,19 @@ void *kc_putchar(core::Registers *)
         console::backspace();
     else
         console::print("%c", c);
+    return 0;
+}
+
+void *kc_malloc(core::Registers *)
+{
+    size_t size = (size_t)task::get_stack_item(task::current_task(), 0);
+    return task::current_task()->process->Allocate(size);
+}
+
+void *kc_free(core::Registers *)
+{
+    void *ptr = task::get_stack_item(task::current_task(), 0);
+    task::current_task()->process->Deallocate(ptr);
     return 0;
 }
 

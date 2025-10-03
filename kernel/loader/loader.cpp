@@ -64,7 +64,7 @@ int MapElfBinary(uint32_t *directory, ELF_File *elf)
         void *virtual_addr = paging::align_to_lower((void *)program_header->p_vaddr);
         void *physical_addr = (void *)((uint32_t)header + program_header->p_offset);
         void *physical_begin = paging::align_to_lower(physical_addr);
-        void *physical_end = paging::align((void *)((uint32_t)physical_addr + program_header->p_filesz));
+        void *physical_end = paging::align((void *)((uint32_t)physical_addr + program_header->p_memsz));
         int flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL;
         if (program_header->p_flags & PF_W)
             flags |= paging::IS_WRITEABLE;
