@@ -1,15 +1,20 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "cstring.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 int main(int, char **)
 {
     char *ptr = (char *)malloc(20);
-    strcpy(ptr, "WEEEeeeEEEEeeeEEE!");
-    print(ptr);
+    strcpy(ptr, "WEEEeeeEEEEeeeEEE!\n");
+    puts(ptr);
     free(ptr);
 
-    while(1);
+    puts("> ");
+    char buf[1024];
+    readline(buf, sizeof(buf), true);
+    puts("\n- ");
+    puts(buf);
 
+    while(1);
     return 0;
 }
