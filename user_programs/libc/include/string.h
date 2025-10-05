@@ -14,6 +14,6 @@ int strcmp(const char *s1, const char *s2);
 int istrncmp(const char *s1, const char *s2, int n);
 int strncmp(const char *str1, const char *str2, int n);
 
-char *strtok(char* str, const char* delimiters);
+char *strtok(char *str, char delimiter);
 
 #endif // LIBC_STRING_H

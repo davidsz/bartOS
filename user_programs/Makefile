@@ -1,4 +1,4 @@
-SUBDIRS := libc blank
+SUBDIRS := libc blank weeshell
 BUILDDIR := build
 
 .PHONY: all $(SUBDIRS) clean

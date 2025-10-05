@@ -88,6 +88,7 @@ EOF
     # Add some runnable applications
     make user_programs
     cp -r user_programs/build/blank/blank.elf /mnt/d/blank.elf
+    cp -r user_programs/build/weeshell/weeshell.elf /mnt/d/weeshell.elf
 
     umount /mnt/d
 

@@ -1,4 +1,4 @@
-TARGET_NAME   := blank.elf
+TARGET_NAME   := weeshell.elf
 SRC_DIR       := .
 
 CC            := i686-elf-gcc

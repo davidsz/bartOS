@@ -85,51 +85,34 @@ int strncmp(const char *str1, const char *str2, int n)
     return 0;
 }
 
-char *strtok(char *str, const char *delimiters)
+char *strtok(char *s, char d)
 {
-    static char *sp = 0;
+    static char *input = NULL;
 
-    int i = 0;
-    int len = strlen(delimiters);
-    if (!str && !sp)
-        return 0;
+    if (s != NULL)
+        input = s;
+    if (input == NULL)
+        return NULL;
 
-    if (str && !sp)
-        sp = str;
+    while (*input == d)
+        input++;
 
-    char* p_start = sp;
-    while (true) {
-        for (i = 0; i < len; i++) {
-            if(*p_start == delimiters[i]) {
-                p_start++;
-                break;
-            }
-        }
-
-        if (i == len) {
-            sp = p_start;
-            break;
-        }
+    if (*input == '\0') {
+        input = NULL;
+        return NULL;
     }
 
-    if (*sp == '\0') {
-        sp = 0;
-        return sp;
+    char *start = input;
+
+    while (*input != '\0' && *input != d)
+        input++;
+
+    if (*input == d) {
+        *input = '\0';
+        input++;
+    } else {
+        input = NULL;
     }
 
-    // Find end of substring
-    while(*sp != '\0') {
-        for (i = 0; i < len; i++) {
-            if (*sp == delimiters[i]) {
-                *sp = '\0';
-                break;
-            }
-        }
-
-        sp++;
-        if (i < len)
-            break;
-    }
-
-    return p_start;
+    return start;
 }

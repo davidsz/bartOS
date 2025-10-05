@@ -127,15 +127,12 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 #endif
 
     task::Process process;
-    process.Load("0:/blank.elf");
+    process.Load("0:/weeshell.elf");
     task::Process::Switch(&process);
-    console::print("blank.elf loaded, running...\n");
 
     task::run_first();
 
-    console::print("blank.elf finished running\n");
-
-    // TODO: Implement an exit condition
+    console::print("Everything is finished running.\n");
     while (true);
 
     // Call destructors of global objects
