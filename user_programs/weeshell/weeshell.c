@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void append(char *str, int *pos, const char *appendix)
 {
@@ -43,6 +44,8 @@ int main(int, char **)
         if (!command)
             continue;
         printf("Resolved command: %s\n", command);
+        printf("Passing pointer: %p\n", command);
+        exec(command);
         free(command);
     }
 

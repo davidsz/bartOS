@@ -6,7 +6,7 @@
 namespace core {
 
 enum KernelCommand {
-    SUM = 0,
+    EXEC = 0,
     PRINT = 1,
     GETKEY = 2,
     PUTCHAR = 3,
@@ -15,7 +15,7 @@ enum KernelCommand {
 };
 
 typedef void *(*KERNEL_COMMAND)(core::Registers *registers);
-void *kc_sum(core::Registers *);
+void *kc_exec(core::Registers *);
 void *kc_print(core::Registers *);
 void *kc_getkey(core::Registers *);
 void *kc_putchar(core::Registers *);

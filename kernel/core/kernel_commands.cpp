@@ -48,7 +48,7 @@ void register_kernel_command(uint32_t id, KERNEL_COMMAND command)
 
 void register_all_kernel_commands()
 {
-    register_kernel_command(KernelCommand::SUM, kc_sum);
+    register_kernel_command(KernelCommand::EXEC, kc_exec);
     register_kernel_command(KernelCommand::PRINT, kc_print);
     register_kernel_command(KernelCommand::GETKEY, kc_getkey);
     register_kernel_command(KernelCommand::PUTCHAR, kc_putchar);
@@ -65,16 +65,33 @@ void *run_kernel_command(uint32_t id, core::Registers *registers)
     return s_kernelCommands[id](registers);
 }
 
-void *kc_sum(core::Registers *)
+void *kc_exec(core::Registers *)
 {
-    // TODO: Getting stack items one-by-one is slow. Implement a batched method!
-    int v2 = (int)task::get_stack_item(task::current_task(), 1);
-    int v1 = (int)task::get_stack_item(task::current_task(), 0);
-    return (void *)(v1 + v2);
+    console::print("kc_exec\n");
+    void *user_space_str_addr = task::get_stack_item(task::current_task(), 0);
+    char buf[1024];
+    copy_string_from_task(task::current_task(), user_space_str_addr, buf, sizeof(buf));
+
+    console::print("kc_exec: ptr  = %p\n", user_space_str_addr);
+    console::print("kc_exec: full = %s\n", buf);
+
+    String command(buf);
+    Vector<String> parts = command.split(' ');
+    if (parts.size() == 0)
+        return 0;
+
+    console::print("kc_exec: program = %s\n", parts[0].c_str());
+/*
+    task::Process *process = new task::Process;
+    process->Load(parts[0].c_str());
+    task::Process::Switch(process);
+*/
+    return 0;
 }
 
 void *kc_print(core::Registers *)
 {
+    // TODO: Getting stack items one-by-one is slow. Implement a batched method!
     void *user_space_msg_addr = task::get_stack_item(task::current_task(), 0);
     char buf[1024];
     copy_string_from_task(task::current_task(), user_space_msg_addr, buf, sizeof(buf));

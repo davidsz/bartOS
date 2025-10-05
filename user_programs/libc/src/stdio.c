@@ -2,6 +2,17 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+
+static char *tohex32(uint32_t h)
+{
+    char *res = (char *)malloc(10 * sizeof(char));
+    strcpy(res, "0x00000000");
+    const char *charset = "0123456789ABCDEF";
+    for (int i = 2, shift = 28; i < 10; i++, shift -= 4)
+        res[i] = charset[(h >> shift) & 0xF];
+    return res;
+}
 
 int printf(const char *format, ...)
 {
@@ -23,6 +34,12 @@ int printf(const char *format, ...)
         }
         case 's': {
             puts(va_arg(ap, char *));
+            break;
+        }
+        case 'p': {
+            char *hex = tohex32(va_arg(ap, uint32_t));
+            puts(hex);
+            free(hex);
             break;
         }
         default: {
