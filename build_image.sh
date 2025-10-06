@@ -73,6 +73,8 @@ if [[ "$BOOTLOADER" == "custom" ]]; then
     # dd if=/dev/zero bs=1048576 count=16 >> "$IMG"
     dd if=/dev/zero bs=1048576 count=32 >> "$IMG"
 
+    make user_programs
+
     # Mount and add test file
     mkdir -p /mnt/d
     mount -t vfat build/bartos.img /mnt/d
@@ -86,8 +88,8 @@ Another file for testing.
 EOF
 
     # Add some runnable applications
-    make user_programs
     cp -r user_programs/build/blank/blank.elf /mnt/d/blank.elf
+    cp -r user_programs/build/ass/ass.elf /mnt/d/ass.elf
     cp -r user_programs/build/weeshell/weeshell.elf /mnt/d/weeshell.elf
 
     umount /mnt/d
