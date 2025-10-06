@@ -47,7 +47,7 @@ restore_general_purpose_registers:
     mov ecx, [ebx+24]
     mov eax, [ebx+28]
     mov ebx, [ebx+16]
-    pop ebp
+    add esp, 4
     ret
 
 ; void change_data_segment(uint16_t selector);
