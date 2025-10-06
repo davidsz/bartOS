@@ -68,6 +68,7 @@ void *run_kernel_command(uint32_t id, core::Registers *registers)
 void *kc_exec(core::Registers *)
 {
     console::print("kc_exec\n");
+    // log::info("kc_exec\n");
     void *user_space_str_addr = task::get_stack_item(task::current_task(), 0);
     char buf[1024];
     copy_string_from_task(task::current_task(), user_space_str_addr, buf, sizeof(buf));
@@ -81,11 +82,11 @@ void *kc_exec(core::Registers *)
         return 0;
 
     console::print("kc_exec: program = %s\n", parts[0].c_str());
-/*
+
     task::Process *process = new task::Process;
     process->Load(parts[0].c_str());
     task::Process::Switch(process);
-*/
+
     return 0;
 }
 

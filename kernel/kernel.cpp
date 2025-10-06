@@ -4,6 +4,7 @@
 #include "core/destructors.h"
 #include "core/idt.h"
 #include "core/kernel_commands.h"
+#include "core/consolelogger.h"
 #include "core/seriallogger.h"
 #include "disk/disk.h"
 #include "disk/filesystem.h"
@@ -63,7 +64,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
         console::print("Loaded by a Multiboot compliant bootloader. (%p)\n\n", multiboot_magic);
 
     // System logging using the serial port
-    core::SerialLogger logger;
+    core::ConsoleLogger logger;
     log::set_logger(&logger);
     log::info("BartOS supports serial output.\n");
 

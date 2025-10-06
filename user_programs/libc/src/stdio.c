@@ -27,6 +27,10 @@ int printf(const char *format, ...)
         }
 
         switch (*++p) {
+        case 'c': {
+            putchar(va_arg(ap, char));
+            break;
+        }
         case 'i':
         case 'd': {
             puts(itoa(va_arg(ap, int)));
