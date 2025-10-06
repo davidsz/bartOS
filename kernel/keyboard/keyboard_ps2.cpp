@@ -11,6 +11,8 @@
 #define KEYBOARD_INTERRUPT 0x21
 #define KEYBOARD_INPUT_PORT 0x60
 
+#define SC_CAPSLOCK 0x3A
+
 namespace core {
 class Registers;
 }
@@ -30,6 +32,9 @@ static constexpr uint8_t s_keyboard_scan_set_one[] = {
     '6', '+', '1', '2', '3', '0', '.'
 };
 
+// TODO: Initial state discovery
+static bool s_caps_lock_on = false;
+
 static char scancode_to_char(uint8_t scancode)
 {
     if (scancode > sizeof(s_keyboard_scan_set_one) / sizeof(uint8_t))
@@ -46,8 +51,16 @@ static void handle_interrupt(core::Registers *)
     if (scancode & KEYBOARD_KEY_RELEASED)
         return;
 
-    if (char c = scancode_to_char(scancode))
+    if (scancode == SC_CAPSLOCK)
+        s_caps_lock_on = !s_caps_lock_on;
+
+    if (char c = scancode_to_char(scancode)) {
+        // Everything is upper case by default, lower it if necessary
+        if (!s_caps_lock_on && c >= 'A' && c <= 'Z')
+            c += 32;
+
         keyboard::push(c);
+    }
 }
 
 namespace keyboard {
