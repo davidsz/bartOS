@@ -131,8 +131,6 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     process.Load("0:/weeshell.elf");
     task::Process::Switch(&process);
 
-    task::run_first();
-
     console::print("Everything is finished running.\n");
     while (true);
 

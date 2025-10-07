@@ -5,6 +5,8 @@ section .asm
 
 _start:
     call print_message
+_label:
+    jmp _label
 
 _input_output_loop:
     call getkey

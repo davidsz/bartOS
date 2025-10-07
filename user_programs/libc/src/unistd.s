@@ -6,8 +6,8 @@ global exec:function
 exec:
     push ebp
     mov ebp, esp
-    push dword [ebp+8]
     mov eax, 0
+    push dword [ebp+8]
     int 0x80
     add esp, 4
     pop ebp

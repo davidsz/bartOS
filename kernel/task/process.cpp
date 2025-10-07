@@ -32,6 +32,10 @@ Process *Process::Get(uint16_t id)
 void Process::Switch(Process *process)
 {
     s_currentProcess = process;
+    log::info("Process::Switch: Switched to process %d\n", s_currentProcess->m_id);
+    log::info("--- entry pointer = %p\n", s_currentProcess->m_task->registers.ip);
+    task::switch_to(s_currentProcess->m_task);
+    task::restore_task(&s_currentProcess->m_task->registers);
 }
 
 int Process::MapMemory()

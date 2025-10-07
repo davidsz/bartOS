@@ -67,24 +67,19 @@ void *run_kernel_command(uint32_t id, core::Registers *registers)
 
 void *kc_exec(core::Registers *)
 {
-    console::print("kc_exec\n");
-    // log::info("kc_exec\n");
     void *user_space_str_addr = task::get_stack_item(task::current_task(), 0);
     char buf[1024];
     copy_string_from_task(task::current_task(), user_space_str_addr, buf, sizeof(buf));
-
-    console::print("kc_exec: ptr  = %p\n", user_space_str_addr);
-    console::print("kc_exec: full = %s\n", buf);
-
     String command(buf);
     Vector<String> parts = command.split(' ');
     if (parts.size() == 0)
         return 0;
 
-    console::print("kc_exec: program = %s\n", parts[0].c_str());
-
     task::Process *process = new task::Process;
-    process->Load(parts[0].c_str());
+    if (process->Load(parts[0].c_str()) != Status::ALL_OK) {
+        log::warning("kc_exec: Failed to load program (%s)\n", parts[0].c_str());
+        return 0;
+    }
     task::Process::Switch(process);
 
     return 0;
