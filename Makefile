@@ -14,6 +14,7 @@ CC       := i686-elf-g++
 CFLAGS   := -c -g -O0 -ffreestanding -Wall -Wextra -Werror -fno-builtin -nostdlib -nostartfiles -nodefaultlibs -fno-rtti -fno-exceptions
 CC_INCL  := -I$(KERNEL_SRC) -I$(LIB_INCLUDE)
 LD       := i686-elf-ld
+LDFLAGS  := -g -O0 -ffreestanding -Wall -Wextra -Werror -fno-builtin -nostdlib -nostartfiles -nodefaultlibs -fno-rtti -fno-exceptions
 
 .PHONY: all bootloader user_programs
 
@@ -55,7 +56,9 @@ KERNEL_OBJECTS  := $(patsubst $(KERNEL_SRC)/%.s,$(KERNEL_BUILD)/%_s.o,$(KERNEL_A
 				   $(patsubst $(KERNEL_SRC)/%.cpp,$(KERNEL_BUILD)/%_cpp.o,$(KERNEL_SOURCES))
 
 kernel.elf: $(KERNEL_OBJECTS)
-	$(LD) -T link_elf.ld $(KERNEL_OBJECTS) $(LIB_TARGET) -o $(BUILDDIR)/kernel.elf
+	$(CC) -T link_elf.ld $(LDFLAGS) $(KERNEL_OBJECTS) $(LIB_TARGET) -o $(BUILDDIR)/kernel.elf
+	objcopy --only-keep-debug $(BUILDDIR)/kernel.elf $(BUILDDIR)/kernel.sym
+	objcopy --strip-debug $(BUILDDIR)/kernel.elf
 
 kernel.bin: $(KERNEL_OBJECTS)
 	$(LD) -T link_bin.ld $(KERNEL_OBJECTS) $(LIB_TARGET) -o $(BUILDDIR)/kernel.bin
