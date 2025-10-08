@@ -12,6 +12,7 @@ enum KernelCommand {
     PUTCHAR = 3,
     MALLOC = 4,
     FREE = 5,
+    EXIT = 6,
 };
 
 typedef void *(*KERNEL_COMMAND)(core::Registers *registers);
@@ -21,6 +22,7 @@ void *kc_getkey(core::Registers *);
 void *kc_putchar(core::Registers *);
 void *kc_malloc(core::Registers *);
 void *kc_free(core::Registers *);
+void *kc_exit(core::Registers *);
 
 void register_all_kernel_commands();
 void register_kernel_command(uint32_t command_id, KERNEL_COMMAND command);

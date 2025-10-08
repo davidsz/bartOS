@@ -4,7 +4,6 @@
 #include "core/destructors.h"
 #include "core/idt.h"
 #include "core/kernel_commands.h"
-#include "core/consolelogger.h"
 #include "core/seriallogger.h"
 #include "disk/disk.h"
 #include "disk/filesystem.h"
@@ -64,7 +63,7 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
         console::print("Loaded by a Multiboot compliant bootloader. (%p)\n\n", multiboot_magic);
 
     // System logging using the serial port
-    core::ConsoleLogger logger;
+    core::SerialLogger logger;
     log::set_logger(&logger);
     log::info("BartOS supports serial output.\n");
 
@@ -127,9 +126,9 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
     }
 #endif
 
-    task::Process process;
-    process.Load("0:/weeshell.elf");
-    task::Process::Switch(&process);
+    task::Process *process = new task::Process;
+    process->Load("0:/weeshell.elf");
+    task::Process::Switch(process);
 
     console::print("Everything is finished running.\n");
     while (true);

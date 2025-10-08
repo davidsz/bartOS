@@ -37,6 +37,7 @@ extern "C" void restore_general_purpose_registers(core::Registers *reg);
 extern "C" void change_data_segment(uint16_t selector);
 
 void switch_to(Task *task);
+void switch_to_next();
 void return_to_current_task();
 void return_to_kernel();
 void run_first();

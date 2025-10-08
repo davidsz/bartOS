@@ -13,6 +13,7 @@
 namespace task {
 
 static Process *s_currentProcess = nullptr;
+// TODO: Implement a Map container
 static Vector<Process *> s_processes;
 
 Process *Process::Current()
@@ -33,9 +34,19 @@ void Process::Switch(Process *process)
 {
     s_currentProcess = process;
     log::info("Process::Switch: Switched to process %d\n", s_currentProcess->m_id);
-    log::info("--- entry pointer = %p\n", s_currentProcess->m_task->registers.ip);
     task::switch_to(s_currentProcess->m_task);
     task::restore_task(&s_currentProcess->m_task->registers);
+}
+
+void Process::SwitchToAny()
+{
+    for (size_t i = 0; i < s_processes.size(); i++) {
+        if (s_processes[i] && !s_processes[i]->m_terminated) {
+            Switch(s_processes[i]);
+            return;
+        }
+    }
+    log::error("Process::SwitchToAny: Couldn't find any process\n");
 }
 
 int Process::MapMemory()
@@ -62,12 +73,14 @@ int Process::MapMemory()
 
 int Process::Load(const String &filename)
 {
+    log::info("Process::Load - 1\n");
     m_binary = loader::LoadFile(filename);
     if (!m_binary) {
         log::error("Process::Load: Failed to load file (%s)\n", filename);
         return Status::E_IO;
     }
 
+    log::info("Process::Load - 2\n");
     void *program_stack = calloc(PROGRAM_STACK_SIZE);
     if (!program_stack) {
         log::error("Process::Load: Failed to allocate memory for stack\n");
@@ -75,8 +88,10 @@ int Process::Load(const String &filename)
     }
     m_stack = program_stack;
 
+    log::info("Process::Load - 3\n");
     m_task = new_task(this);
 
+    log::info("Process::Load - 4\n");
     if (int res = MapMemory()) {
         log::error("Process::Load: Failed to map memory (%d)\n", res);
         delete m_task;
@@ -85,6 +100,7 @@ int Process::Load(const String &filename)
 
     m_filename = filename;
     m_id = s_processes.size();
+    m_terminated = false;
     s_processes.push_back(this);
     return Status::ALL_OK;
 }
@@ -114,12 +130,31 @@ void Process::Deallocate(void *ptr)
         if (it->ptr == ptr) {
             void *end_address = paging::align((void *)((uint32_t)it->ptr + it->size));
             paging::map_from_to(m_task->page_directory, it->ptr, it->ptr, end_address, 0x00);
-
             free(it->ptr);
             m_allocations.erase(it);
             return;
         }
     }
+}
+
+void Process::Terminate()
+{
+    for (auto it = m_allocations.begin(); it != m_allocations.end(); it++)
+        Deallocate(it->ptr);
+
+    delete m_binary;
+    m_binary = 0;
+
+    free(m_stack);
+    m_stack = 0;
+
+    delete m_task;
+    m_task = 0;
+
+    m_terminated = true;
+
+    if (this == s_currentProcess)
+        SwitchToAny();
 }
 
 } // namespace task

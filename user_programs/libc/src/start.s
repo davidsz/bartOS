@@ -7,4 +7,9 @@ section .asm
 
 _start:
     call main
+
+    ; Call the exit command
+    mov eax, 6
+    int 0x80
+
     ret

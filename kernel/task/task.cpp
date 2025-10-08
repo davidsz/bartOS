@@ -95,6 +95,17 @@ void switch_to(Task *task)
     paging::switch_directory(task->page_directory);
 }
 
+void switch_to_next()
+{
+    Task *next = next_task();
+    if (!next) {
+        log::error("task::switch_to_next: No next Task available.\n");
+        return;
+    }
+    switch_to(next);
+    restore_task(&next->registers);
+}
+
 void return_to_current_task()
 {
     if (!s_currentTask)

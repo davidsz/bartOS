@@ -5,6 +5,7 @@
 #include "log.h"
 #include "memory.h"
 #include "registers.h"
+#include "task/process.h"
 #include "task/task.h"
 #include "vector.h"
 #include <stdint.h>
@@ -121,6 +122,15 @@ extern "C" void *int80h_handler(uint32_t command, core::Registers *interrupt_fra
     return result;
 }
 
+void handle_exception(core::Registers *)
+{
+    task::Process *process = task::current_task()->process;
+    log::warning("Exception in process %d\n", process->ID());
+    process->Terminate();
+    // TODO: In what cases should we switch task here?
+    // task::switch_to_next();
+}
+
 void setup_idt()
 {
     // The IDT can have up to 256 entries.
@@ -138,6 +148,9 @@ void setup_idt()
     add_interrupt_descriptor(0, (void *)idt_zero);
     // 0x80 handles kernel commands
     add_interrupt_descriptor(0x80, (void *)int80h);
+
+    for (int i = 0; i < 0x20; i++)
+        register_interrupt_callback(i, handle_exception);
 
     // Tell the system where IDT is
     s_idtPointer.size = sizeof(s_idt) - 1; // The -1 comes from the IDT specs

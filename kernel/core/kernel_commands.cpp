@@ -54,6 +54,7 @@ void register_all_kernel_commands()
     register_kernel_command(KernelCommand::PUTCHAR, kc_putchar);
     register_kernel_command(KernelCommand::MALLOC, kc_malloc);
     register_kernel_command(KernelCommand::FREE, kc_free);
+    register_kernel_command(KernelCommand::EXIT, kc_exit);
 }
 
 void *run_kernel_command(uint32_t id, core::Registers *registers)
@@ -67,6 +68,7 @@ void *run_kernel_command(uint32_t id, core::Registers *registers)
 
 void *kc_exec(core::Registers *)
 {
+    log::info("kc_exec\n");
     void *user_space_str_addr = task::get_stack_item(task::current_task(), 0);
     char buf[1024];
     copy_string_from_task(task::current_task(), user_space_str_addr, buf, sizeof(buf));
@@ -76,10 +78,12 @@ void *kc_exec(core::Registers *)
         return 0;
 
     task::Process *process = new task::Process;
+    log::info("--- before load\n");
     if (process->Load(parts[0].c_str()) != Status::ALL_OK) {
         log::warning("kc_exec: Failed to load program (%s)\n", parts[0].c_str());
         return 0;
     }
+    log::info("--- after load\n");
     task::Process::Switch(process);
 
     return 0;
@@ -121,6 +125,15 @@ void *kc_free(core::Registers *)
 {
     void *ptr = task::get_stack_item(task::current_task(), 0);
     task::current_task()->process->Deallocate(ptr);
+    return 0;
+}
+
+void *kc_exit(core::Registers *)
+{
+    log::info("kc_exit: Exiting process %d\n", task::current_task()->process->ID());
+    task::current_task()->process->Terminate();
+    // TODO
+    // task::switch_to_next();
     return 0;
 }
 

@@ -33,7 +33,7 @@ char *resolve_command(char *cmd)
 
 int main(int, char **)
 {
-    puts("WEEshell (bartOS 0.1)\n");
+    puts("WEEshell 0.1\n");
 
     while (true) {
         puts("> ");
@@ -44,7 +44,6 @@ int main(int, char **)
         if (!command)
             continue;
         printf("Resolved command: %s\n", command);
-        printf("Passing pointer: %p\n", command);
         exec(command);
         free(command);
     }

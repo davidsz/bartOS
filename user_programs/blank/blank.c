@@ -12,6 +12,9 @@ int main(int, char **)
 
     // exec("0:/ass.elf");
 
+    // char *crash = (char *)0x00;
+    // *crash = 0x50;
+
     puts("Blank - 2\n");
 /*
     puts("> ");
@@ -20,6 +23,8 @@ int main(int, char **)
     puts("\n- ");
     puts(buf);
 */
-    while(1);
+
+    // while(1);
+
     return 0;
 }

@@ -16,14 +16,20 @@ struct Task;
 
 class Process {
 public:
+    // TODO: Support proper destruction and removing from the list
+    ~Process() = delete;
+
     static Process *Get(uint16_t id);
     static Process *Current();
     static void Switch(Process *process);
+    static void SwitchToAny();
 
     int Load(const String &filename);
     void *Allocate(size_t size);
     void Deallocate(void *ptr);
+    void Terminate();
 
+    uint16_t ID() { return m_id; }
     keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
     loader::Binary *Binary() { return m_binary; }
 
@@ -55,6 +61,9 @@ private:
 
     // The physical pointer to the stack memory
     void *m_stack = 0;
+
+    // State of the process
+    bool m_terminated = true;
 };
 
 }; // namespace task
