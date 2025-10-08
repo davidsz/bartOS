@@ -13,7 +13,10 @@ restore_task:
     push dword [ebx+48]     ; Push the data/stack selector
     push dword [ebx+44]     ; Push the stack pointer
 
-    mov eax, [ebp+40]       ; Take the Flags from the argument
+    ; FIXME: Flags should be taken from the save Registers
+    ; mov eax, [ebp+40]       ; Take the Flags from the argument
+    pushf
+    pop eax
     or eax, 0x200           ; Set the Interrupt Flag to enable interrupts
     push eax
 
@@ -28,7 +31,7 @@ restore_task:
     mov fs, ax
     mov gs, ax
 
-    push dword [ebx+4]
+    push dword [ebp+4]
     call restore_general_purpose_registers
     add esp, 4
 

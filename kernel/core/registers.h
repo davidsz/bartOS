@@ -8,19 +8,19 @@
 namespace core {
 
 struct Registers {
-    uint32_t edi = 0;
-    uint32_t esi = 0;
-    uint32_t ebp = 0;
-    uint32_t reserved = 0; // The pusha command pushes the original esp here
-    uint32_t ebx = 0;
-    uint32_t edx = 0;
-    uint32_t ecx = 0;
-    uint32_t eax = 0;
-    uint32_t ip = 0;
-    uint32_t cs = 0;
-    uint32_t flags = 0;
-    uint32_t esp = 0;
-    uint32_t ss = 0;
+    uint32_t edi = 0;       // + 0
+    uint32_t esi = 0;       // + 4
+    uint32_t ebp = 0;       // + 8
+    uint32_t reserved = 0;  // + 12 (The pusha command pushes the original esp here)
+    uint32_t ebx = 0;       // + 16
+    uint32_t edx = 0;       // + 20
+    uint32_t ecx = 0;       // + 24
+    uint32_t eax = 0;       // + 28
+    uint32_t ip = 0;        // + 32
+    uint32_t cs = 0;        // + 36
+    uint32_t flags = 0;     // + 40
+    uint32_t esp = 0;       // + 44
+    uint32_t ss = 0;        // + 48
 
     Registers() = default;
 

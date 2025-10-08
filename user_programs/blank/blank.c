@@ -10,7 +10,7 @@ int main(int, char **)
     puts(ptr);
     free(ptr);
 
-    exec("0:/ass.elf");
+    // exec("0:/ass.elf");
 
     puts("Blank - 2\n");
 /*
