@@ -24,15 +24,15 @@ static void copy_string_from_task(task::Task *task, void *virt, char *buf_out, s
     }
 
     // We map the task's tmp address to the kernel's tmp address
-    uint32_t *task_directory = task->page_directory;
+    uint32_t *task_directory = task->pageDirectory();
     uint32_t old_entry = paging::get_table_entry(task_directory, tmp);
     uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
     paging::map(task_directory, tmp, tmp, flags);
 
     // Now strcpy can copy into the shared area in user land
-    task::switch_to(task);
+    task->ActivateContext();
     strcpy(tmp, (char *)virt);
-    task::return_to_kernel();
+    task::Task::ReturnToKernel();
 
     // We unmap the shared memory by setting back the old entry
     paging::set_table_entry(task_directory, tmp, old_entry);
@@ -70,9 +70,10 @@ void *run_kernel_command(uint32_t id, core::Registers *registers)
 void *kc_exec(core::Registers *)
 {
     log::info("kc_exec\n");
-    void *user_space_str_addr = task::get_stack_item(task::current_task(), 0);
+    task::Task *current_task = task::Task::Current();
+    void *user_space_str_addr = current_task->GetStackItem(0);
     char buf[1024];
-    copy_string_from_task(task::current_task(), user_space_str_addr, buf, sizeof(buf));
+    copy_string_from_task(current_task, user_space_str_addr, buf, sizeof(buf));
     String command(buf);
     Vector<String> parts = command.split(' ');
     if (parts.size() == 0)
@@ -93,10 +94,11 @@ void *kc_exec(core::Registers *)
 
 void *kc_print(core::Registers *)
 {
+    task::Task *current_task = task::Task::Current();
     // TODO: Getting stack items one-by-one is slow. Implement a batched method!
-    void *user_space_msg_addr = task::get_stack_item(task::current_task(), 0);
+    void *user_space_msg_addr = current_task->GetStackItem(0);
     char buf[1024];
-    copy_string_from_task(task::current_task(), user_space_msg_addr, buf, sizeof(buf));
+    copy_string_from_task(current_task, user_space_msg_addr, buf, sizeof(buf));
     console::print(buf);
     return 0;
 }
@@ -109,7 +111,7 @@ void *kc_getkey(core::Registers *)
 
 void *kc_putchar(core::Registers *)
 {
-    int c = (char)(int)task::get_stack_item(task::current_task(), 0);
+    int c = (char)(int)task::Task::Current()->GetStackItem(0);
     if (c == 0x08)
         console::backspace();
     else
@@ -119,20 +121,22 @@ void *kc_putchar(core::Registers *)
 
 void *kc_malloc(core::Registers *)
 {
-    size_t size = (size_t)task::get_stack_item(task::current_task(), 0);
-    return task::current_task()->process->Allocate(size);
+    task::Task *current_task = task::Task::Current();
+    size_t size = (size_t)current_task->GetStackItem(0);
+    return current_task->process()->Allocate(size);
 }
 
 void *kc_free(core::Registers *)
 {
-    void *ptr = task::get_stack_item(task::current_task(), 0);
-    task::current_task()->process->Deallocate(ptr);
+    task::Task *current_task = task::Task::Current();
+    void *ptr = current_task->GetStackItem(0);
+    current_task->process()->Deallocate(ptr);
     return 0;
 }
 
 void *kc_exit(core::Registers *)
 {
-    task::current_task()->process->Terminate();
+    task::Task::Current()->process()->Terminate();
     // TODO
     // task::switch_to_next();
     return 0;
@@ -145,10 +149,10 @@ void *kc_getargs(core::Registers *)
         char **argv;
     };
 
-    task::Task *task = task::current_task();
-    arguments_t *args_out = (arguments_t *)paging::get_physical_address(task->page_directory, task::get_stack_item(task, 0));
+    task::Task *task = task::Task::Current();
+    arguments_t *args_out = (arguments_t *)paging::get_physical_address(task->pageDirectory(), task->GetStackItem(0));
 
-    List<String> arg_list = task->process->Arguments();
+    List<String> arg_list = task->process()->Arguments();
     args_out->argc = arg_list.length();
     args_out->argv = (char **)malloc(sizeof(char *) * args_out->argc);
     int i = 0;

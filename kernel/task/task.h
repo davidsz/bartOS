@@ -8,42 +8,38 @@ namespace task {
 
 class Process;
 
-// TODO: Implement as a well-formatted class
-struct Task {
+class Task
+{
+public:
+    static Task *New(Process *);
+    static Task *Current();
+    static Task *Next();
+    static void RunNext();
+    static void ReturnToCurrent();
+    static void ReturnToKernel();
+    static void SaveCurrentState(core::Registers *frame);
+
     ~Task();
 
+    uint32_t *pageDirectory() { return m_pageDirectory; }
+    Process *process() { return m_process; }
+
+    void ActivateContext();
+    void ActivateAndRun();
+    void *GetStackItem(uint32_t index);
+
+private:
+    Task(Process *);
+
     // The page directory of the task
-    uint32_t *page_directory = 0;
+    uint32_t *m_pageDirectory = 0;
 
     // The registers of the task when the task is not running
-    core::Registers registers;
+    core::Registers m_registers;
 
     // Not owning reference for the process
-    Process *process = 0;
-
-    // The next task in the linked list
-    Task *next = 0;
-
-    // Previous task in the linked list
-    Task *prev = 0;
+    Process *m_process = 0;
 };
-
-Task *new_task(Process *);
-Task *current_task();
-Task *next_task();
-
-extern "C" void restore_task(core::Registers *reg);
-extern "C" void restore_general_purpose_registers(core::Registers *reg);
-extern "C" void change_data_segment(uint16_t selector);
-
-void switch_to(Task *task);
-void switch_to_next();
-void return_to_current_task();
-void return_to_kernel();
-void run_first();
-void save_state(Task *task, core::Registers *frame);
-void save_current_state(core::Registers *frame);
-void *get_stack_item(Task *task, uint32_t index);
 
 }; // namespace task
 

@@ -1,13 +1,13 @@
 [BITS 32]
 
-global restore_task
+global restore_and_run_task
 global restore_general_purpose_registers
 global change_data_segment
 
 section .text
 
-; void restore_task(Registers *reg);
-restore_task:
+; void restore_and_run_task(Registers *reg);
+restore_and_run_task:
     mov ebp, esp
     mov ebx, [ebp+4]
     push dword [ebx+48]     ; Push the data/stack selector

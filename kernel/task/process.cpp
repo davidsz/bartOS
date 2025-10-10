@@ -34,8 +34,7 @@ void Process::Switch(Process *process)
 {
     s_currentProcess = process;
     log::info("Process::Switch: Switched to process %d\n", s_currentProcess->m_id);
-    task::switch_to(s_currentProcess->m_task);
-    task::restore_task(&s_currentProcess->m_task->registers);
+    s_currentProcess->m_task->ActivateAndRun();
 }
 
 void Process::SwitchToAny()
@@ -54,10 +53,10 @@ int Process::MapMemory()
     int res = Status::ALL_OK;
     switch (m_binary->format()) {
     case loader::Binary::RawBinary:
-        res = loader::MapRawBinary(m_task->page_directory, m_binary);
+        res = loader::MapRawBinary(m_task->pageDirectory(), m_binary);
         break;
     case loader::Binary::Elf:
-        res = loader::MapElfBinary(m_task->page_directory, (loader::ELF_File *)m_binary);
+        res = loader::MapElfBinary(m_task->pageDirectory(), (loader::ELF_File *)m_binary);
         break;
     default:
         log::error("Process::MapMemory: Invalid binary format\n");
@@ -67,7 +66,7 @@ int Process::MapMemory()
     // Map the stack
     void *end_address = paging::align((void *)((uint32_t)m_stack + PROGRAM_STACK_SIZE));
     uint8_t flags = paging::IS_PRESENT | paging::ACCESS_FROM_ALL | paging::IS_WRITEABLE;
-    paging::map_from_to(m_task->page_directory, (void *)PROGRAM_VIRTUAL_STACK_ADDRESS_END, m_stack, end_address, flags);
+    paging::map_from_to(m_task->pageDirectory(), (void *)PROGRAM_VIRTUAL_STACK_ADDRESS_END, m_stack, end_address, flags);
     return res;
 }
 
@@ -81,19 +80,27 @@ int Process::Load(const String &filename)
     }
 
     log::info("Process::Load - 2\n");
-    void *program_stack = calloc(PROGRAM_STACK_SIZE);
-    if (!program_stack) {
+    void *m_stack = calloc(PROGRAM_STACK_SIZE);
+    if (!m_stack) {
         log::error("Process::Load: Failed to allocate memory for stack\n");
+        delete m_binary;
         return Status::E_NO_MEMORY;
     }
-    m_stack = program_stack;
 
     log::info("Process::Load - 3\n");
-    m_task = new_task(this);
+    m_task = Task::New(this);
+    if (!m_task) {
+        log::error("Process::Load: Failed to create task\n");
+        delete m_binary;
+        free(m_stack);
+        return Status::E_NO_MEMORY;
+    }
 
     log::info("Process::Load - 4\n");
     if (int res = MapMemory()) {
         log::error("Process::Load: Failed to map memory (%d)\n", res);
+        delete m_binary;
+        free(m_stack);
         delete m_task;
         return Status::E_IO;
     }
@@ -120,7 +127,7 @@ void *Process::Allocate(size_t size)
 
     void *end_address = paging::align((void *)((uint32_t)ptr + size));
     int flags = paging::IS_WRITEABLE | paging::IS_PRESENT | paging::ACCESS_FROM_ALL;
-    paging::map_from_to(m_task->page_directory, ptr, ptr, end_address, flags);
+    paging::map_from_to(m_task->pageDirectory(), ptr, ptr, end_address, flags);
 
     m_allocations.push_back({
         .ptr = ptr,
@@ -134,7 +141,7 @@ void Process::Deallocate(void *ptr)
     for (auto it = m_allocations.begin(); it != m_allocations.end(); it++) {
         if (it->ptr == ptr) {
             void *end_address = paging::align((void *)((uint32_t)it->ptr + it->size));
-            paging::map_from_to(m_task->page_directory, it->ptr, it->ptr, end_address, 0x00);
+            paging::map_from_to(m_task->pageDirectory(), it->ptr, it->ptr, end_address, 0x00);
             free(it->ptr);
             m_allocations.erase(it);
             return;

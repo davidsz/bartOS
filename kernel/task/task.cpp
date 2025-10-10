@@ -9,156 +9,135 @@
 
 namespace task {
 
-// TODO: Maybe use my custom List implementation?
+// Assembly functions
+extern "C" void restore_and_run_task(core::Registers *reg);
+extern "C" void change_data_segment(uint16_t selector);
+
+static List<Task *> s_tasks;
 static Task *s_currentTask = 0;
-static Task *s_taskTail = 0;
-static Task *s_taskHead = 0;
 
-static void remove_from_list(Task *task)
+Task *Task::New(Process *process)
 {
-    if (task->prev)
-        task->prev->next = task->next;
-
-    if (task == s_taskHead)
-        s_taskHead = task->next;
-
-    if (task == s_taskTail)
-        s_taskTail = task->prev;
-
-    if (task == s_currentTask)
-        s_currentTask = next_task();
-}
-
-static int init_task(Task *task, Process *process)
-{
-    // Map the entire 4 Gb address space to itself
-    task->page_directory = paging::new_directory(paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
-    if (!task->page_directory) {
-        log::error("init_task: failed to allocate page directory\n");
-        return E_NO_MEMORY;
-    }
-
-    task->process = process;
-
-    task->registers.ip = (uint32_t)process->Binary()->entryAddress();
-    task->registers.ss = USER_DATA_SELECTOR;
-    task->registers.cs = USER_CODE_SELECTOR;
-    task->registers.esp = PROGRAM_VIRTUAL_STACK_ADDRESS_START;
-
-    return Status::ALL_OK;
-}
-
-Task *new_task(Process *process)
-{
-    Task *task = new Task;
+    Task *task = new Task(process);
     if (!task) {
-        log::error("task_new: out of memory\n");
+        log::error("Task::New: Out of memory\n");
         return nullptr;
     }
 
-    if (init_task(task, process) != Status::ALL_OK) {
-        log::error("task_new: failed to initialize task\n");
-        delete task;
-        return nullptr;
-    }
-
-    if (s_taskHead == 0) {
-        s_taskHead = task;
-        s_taskTail = task;
-        s_currentTask = task;
-        return task;
-    }
-
-    s_taskTail->next = task;
-    task->prev = s_taskTail;
-    s_taskTail = task;
-
+    s_tasks.push_back(task);
     return task;
 }
 
-Task *current_task()
+Task *Task::Current()
 {
+    if (!s_currentTask) {
+        log::error("Task::Current: No current task available\n");
+        return nullptr;
+    }
     return s_currentTask;
 }
 
-Task *next_task()
+Task *Task::Next()
 {
-    if (!s_currentTask->next)
-        return s_taskHead;
-    return s_currentTask->next;
+    if (s_currentTask == *s_tasks.end())
+        return *s_tasks.begin();
+
+    for (auto it = s_tasks.begin(); it != s_tasks.end(); it++) {
+        if (*it == s_currentTask)
+            return *(++it);
+    }
+
+    log::error("Task::Next: Couldn't find next task\n");
+    return nullptr;
 }
 
-void switch_to(Task *task)
+void Task::RunNext()
 {
-    s_currentTask = task;
-    change_data_segment(USER_DATA_SELECTOR);
-    paging::switch_directory(task->page_directory);
-}
-
-void switch_to_next()
-{
-    Task *next = next_task();
+    Task *next = Next();
     if (!next) {
-        log::error("task::switch_to_next: No next Task available.\n");
+        log::error("Task::SwitchToNext: No next Task available.\n");
         return;
     }
-    switch_to(next);
-    restore_task(&next->registers);
+    next->ActivateAndRun();
 }
 
-void return_to_current_task()
+void Task::ReturnToCurrent()
 {
     if (!s_currentTask)
         return;
-    switch_to(s_currentTask);
+    s_currentTask->ActivateContext();
 }
 
-void return_to_kernel()
+void Task::ReturnToKernel()
 {
     change_data_segment(KERNEL_DATA_SELECTOR);
     paging::switch_directory(kernel_page_directory());
 }
 
-void run_first()
+void Task::SaveCurrentState(core::Registers *frame)
 {
     if (!s_currentTask) {
-        log::error("run_first: no task\n");
+        log::error("Task::SaveCurrentState: No current task available\n");
         return;
     }
-    switch_to(s_taskHead);
-    restore_task(&s_taskHead->registers);
+    s_currentTask->m_registers = *frame;
 }
 
-void save_state(Task *task, core::Registers *frame)
+void Task::ActivateContext()
 {
-    task->registers = *frame;
+    s_currentTask = this;
+    change_data_segment(USER_DATA_SELECTOR);
+    paging::switch_directory(m_pageDirectory);
 }
 
-void save_current_state(core::Registers *frame)
+void Task::ActivateAndRun()
 {
-    if (!s_currentTask) {
-        log::error("save_current_state: no task\n");
-        return;
-    }
-    save_state(s_currentTask, frame);
+    ActivateContext();
+    restore_and_run_task(&m_registers);
 }
 
-void *get_stack_item(Task *task, uint32_t index)
+void *Task::GetStackItem(uint32_t index)
 {
     void* result = 0;
-    uint32_t *stack_pointer = (uint32_t *)task->registers.esp;
+    uint32_t *stack_pointer = (uint32_t *)m_registers.esp;
 
-    switch_to(task);
+    ActivateContext();
     result = (void *)stack_pointer[index];
-    return_to_kernel();
+    ReturnToKernel();
 
     return result;
 }
 
+Task::Task(Process *process)
+{
+    // Map the entire 4 Gb address space to itself
+    m_pageDirectory = paging::new_directory(paging::IS_PRESENT | paging::ACCESS_FROM_ALL);
+    if (!m_pageDirectory) {
+        log::error("Task::New: Failed to allocate page directory\n");
+        return;
+    }
+
+    m_process = process;
+
+    m_registers.ip = (uint32_t)process->Binary()->entryAddress();
+    m_registers.ss = USER_DATA_SELECTOR;
+    m_registers.cs = USER_CODE_SELECTOR;
+    m_registers.esp = PROGRAM_VIRTUAL_STACK_ADDRESS_START;
+}
+
 Task::~Task()
 {
-    paging::free_directory(page_directory);
-    remove_from_list(this);
+    paging::free_directory(m_pageDirectory);
+
+    for (auto it = s_tasks.begin(); it != s_tasks.end(); it++) {
+        if (this == *it) {
+            s_tasks.erase(it);
+            if (this == s_currentTask)
+                s_currentTask = Task::Next();
+            return;
+        }
+    }
+    log::error("Task::~Task: Couldn't find task in list\n");
 }
 
 }; // namespace task

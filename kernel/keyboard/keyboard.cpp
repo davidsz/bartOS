@@ -56,10 +56,11 @@ void push(char c)
 
 char pop()
 {
-    if (!task::current_task())
+    task::Task *current_task = task::Task::Current();
+    if (!current_task)
         return 0;
     // In case of pop() it's possible that we have to pop from a background task
-    task::Process *process = task::current_task()->process;
+    task::Process *process = current_task->process();
     return process->KeyBuffer()->Pop();
 }
 

@@ -102,12 +102,12 @@ void idt_zero() { }
 
 extern "C" void interrupt_handler(int interrupt, core::Registers *frame)
 {
-    task::return_to_kernel();
+    task::Task::ReturnToKernel();
     if (s_interruptCallbacks[interrupt]) {
-        task::save_current_state(frame);
+        task::Task::SaveCurrentState(frame);
         s_interruptCallbacks[interrupt](frame);
     }
-    task::return_to_current_task();
+    task::Task::ReturnToCurrent();
     core::outb(0x20, 0x20);
 }
 
@@ -115,16 +115,16 @@ extern "C" void int80h();
 extern "C" void *int80h_handler(uint32_t command, core::Registers *interrupt_frame)
 {
     void *result = 0;
-    task::return_to_kernel();
-    task::save_current_state(interrupt_frame);
+    task::Task::ReturnToKernel();
+    task::Task::SaveCurrentState(interrupt_frame);
     result = core::run_kernel_command(command, interrupt_frame);
-    task::return_to_current_task();
+    task::Task::ReturnToCurrent();
     return result;
 }
 
 void handle_exception(core::Registers *)
 {
-    task::Process *process = task::current_task()->process;
+    task::Process *process = task::Task::Current()->process();
     log::warning("Exception in process %d\n", process->ID());
     process->Terminate();
     // TODO: In what cases should we switch task here?
