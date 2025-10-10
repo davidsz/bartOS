@@ -25,11 +25,13 @@ public:
     static void SwitchToAny();
 
     int Load(const String &filename);
+    void AddArgument(const String &argument);
     void *Allocate(size_t size);
     void Deallocate(void *ptr);
     void Terminate();
 
     uint16_t ID() { return m_id; }
+    List<String> Arguments() { return m_arguments; }
     keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
     loader::Binary *Binary() { return m_binary; }
 
@@ -46,6 +48,9 @@ private:
 
     // The binary file to be loaded
     String m_filename;
+
+    // Command line arguments
+    List<String> m_arguments;
 
     // The main process task
     Task *m_task = 0;

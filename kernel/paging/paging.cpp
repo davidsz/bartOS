@@ -161,6 +161,13 @@ uint32_t get_table_entry(uint32_t *directory, void *virt)
     return table[table_index];
 }
 
+void *get_physical_address(uint32_t *directory, void *virt)
+{
+    void *virt_addr_aligned = align_to_lower(virt);
+    uint32_t difference = (uint32_t)virt - (uint32_t)virt_addr_aligned;
+    return (void *)((get_table_entry(directory, virt_addr_aligned) & 0xfffff000) + difference);
+}
+
 void enable()
 {
     paging_enable();

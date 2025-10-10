@@ -32,6 +32,7 @@ void map_range(uint32_t *directory, void *virt, void *phys, size_t page_count, i
 void map(uint32_t *directory, void *virt, void *phys, int flags);
 void set_table_entry(uint32_t *directory, void *virt, uint32_t value);
 uint32_t get_table_entry(uint32_t *directory, void *virt);
+void *get_physical_address(uint32_t *directory, void *virt);
 
 void enable();
 

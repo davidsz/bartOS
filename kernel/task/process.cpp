@@ -105,6 +105,11 @@ int Process::Load(const String &filename)
     return Status::ALL_OK;
 }
 
+void Process::AddArgument(const String &argument)
+{
+    m_arguments.push_back(argument);
+}
+
 void *Process::Allocate(size_t size)
 {
     void *ptr = malloc(size);

@@ -55,6 +55,7 @@ void register_all_kernel_commands()
     register_kernel_command(KernelCommand::MALLOC, kc_malloc);
     register_kernel_command(KernelCommand::FREE, kc_free);
     register_kernel_command(KernelCommand::EXIT, kc_exit);
+    register_kernel_command(KernelCommand::GETARGS, kc_getargs);
 }
 
 void *run_kernel_command(uint32_t id, core::Registers *registers)
@@ -78,14 +79,15 @@ void *kc_exec(core::Registers *)
         return 0;
 
     task::Process *process = new task::Process;
-    log::info("--- before load\n");
     if (process->Load(parts[0].c_str()) != Status::ALL_OK) {
         log::warning("kc_exec: Failed to load program (%s)\n", parts[0].c_str());
         return 0;
     }
-    log::info("--- after load\n");
-    task::Process::Switch(process);
 
+    for (size_t i = 0; i < parts.size(); i++)
+        process->AddArgument(parts[i]);
+
+    task::Process::Switch(process);
     return 0;
 }
 
@@ -130,10 +132,31 @@ void *kc_free(core::Registers *)
 
 void *kc_exit(core::Registers *)
 {
-    log::info("kc_exit: Exiting process %d\n", task::current_task()->process->ID());
     task::current_task()->process->Terminate();
     // TODO
     // task::switch_to_next();
+    return 0;
+}
+
+void *kc_getargs(core::Registers *)
+{
+    struct arguments_t {
+        int argc;
+        char **argv;
+    };
+
+    task::Task *task = task::current_task();
+    arguments_t *args_out = (arguments_t *)paging::get_physical_address(task->page_directory, task::get_stack_item(task, 0));
+
+    List<String> arg_list = task->process->Arguments();
+    args_out->argc = arg_list.length();
+    args_out->argv = (char **)malloc(sizeof(char *) * args_out->argc);
+    int i = 0;
+    for (auto it = arg_list.begin(); it != arg_list.end(); it++, i++) {
+        args_out->argv[i] = (char *)malloc(sizeof(char) * it->length());
+        strcpy(args_out->argv[i], it->c_str());
+    }
+
     return 0;
 }
 

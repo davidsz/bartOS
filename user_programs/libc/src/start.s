@@ -1,12 +1,12 @@
 [BITS 32]
 
 global _start
-extern main
+extern c_start
 
 section .asm
 
 _start:
-    call main
+    call c_start
 
     ; Call the exit command
     mov eax, 6
