@@ -39,14 +39,18 @@ Task *Task::Current()
 
 Task *Task::Next()
 {
-    if (s_currentTask == *s_tasks.end())
-        return *s_tasks.begin();
+    if (!s_tasks.length()) {
+        log::error("Task::Next: Task list is empty\n");
+        return nullptr;
+    }
+
+    if (!s_currentTask || s_currentTask == s_tasks.back())
+        return s_tasks.front();
 
     for (auto it = s_tasks.begin(); it != s_tasks.end(); it++) {
         if (*it == s_currentTask)
             return *(++it);
     }
-
     log::error("Task::Next: Couldn't find next task\n");
     return nullptr;
 }
@@ -55,9 +59,10 @@ void Task::RunNext()
 {
     Task *next = Next();
     if (!next) {
-        log::error("Task::SwitchToNext: No next Task available.\n");
+        log::error("Task::RunNext: No next Task available.\n");
         return;
     }
+    log::info("Task::RunNext: process %d\n", next->m_process->ID());
     next->ActivateAndRun();
 }
 
@@ -123,6 +128,8 @@ Task::Task(Process *process)
     m_registers.ss = USER_DATA_SELECTOR;
     m_registers.cs = USER_CODE_SELECTOR;
     m_registers.esp = PROGRAM_VIRTUAL_STACK_ADDRESS_START;
+    // Interrupt Enabled, reserved bit set
+    m_registers.flags = 0b1000000010;
 }
 
 Task::~Task()

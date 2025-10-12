@@ -17,8 +17,8 @@ public:
     explicit List();
     ~List();
 
-    T &front() const;
-    T &back() const;
+    T front() const;
+    T back() const;
     void push_front(const T &value);
     void push_back(const T &value);
     T pop_front();
@@ -96,7 +96,7 @@ List<T>::~List()
 }
 
 template <typename T>
-T &List<T>::front() const
+T List<T>::front() const
 {
     if (!m_head)
         return T();
@@ -104,7 +104,7 @@ T &List<T>::front() const
 }
 
 template <typename T>
-T &List<T>::back() const
+T List<T>::back() const
 {
     if (!m_head)
         return T();
