@@ -151,17 +151,21 @@ void Process::Deallocate(void *ptr)
 
 void Process::Terminate()
 {
+    log::info("Process::Terminate: Terminating process %d\n", m_id);
+
     for (auto it = m_allocations.begin(); it != m_allocations.end(); it++)
         Deallocate(it->ptr);
 
-    delete m_binary;
-    m_binary = 0;
+    // FIXME
+    // delete m_binary;
+    //m_binary = 0;
 
     free(m_stack);
     m_stack = 0;
 
-    delete m_task;
-    m_task = 0;
+    // FIXME
+    // delete m_task;
+    // m_task = 0;
 
     m_terminated = true;
 

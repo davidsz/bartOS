@@ -40,6 +40,10 @@ Binary *LoadFile(const String &filename)
     Binary *result = ELF_File::FromLoaded(filename, program_data, stat.size);
     if (!result)
         result = Binary::FromLoaded(filename, program_data, stat.size);
+
+    // FIXME
+    // core::fclose(fd);
+
     return result;
 }
 

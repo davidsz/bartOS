@@ -30,7 +30,7 @@ public:
     void Deallocate(void *ptr);
     void Terminate();
 
-    uint16_t ID() { return m_id; }
+    int ID() { return m_id; }
     List<String> Arguments() { return m_arguments; }
     keyboard::KeyBuffer *KeyBuffer() { return &m_keybuffer; }
     loader::Binary *Binary() { return m_binary; }
@@ -44,7 +44,7 @@ private:
     int MapMemory();
 
     // The process ID
-    uint16_t m_id = -1;
+    int m_id = -1;
 
     // The binary file to be loaded
     String m_filename;
