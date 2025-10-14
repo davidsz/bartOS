@@ -162,9 +162,8 @@ void Process::Terminate()
     free(m_stack);
     m_stack = 0;
 
-    // FIXME
-    // delete m_task;
-    // m_task = 0;
+    delete m_task;
+    m_task = 0;
 
     m_terminated = true;
 

@@ -30,7 +30,7 @@ void *calloc(size_t size)
 
 void free(void *ptr)
 {
-    if (!s_allocator)
+    if (!ptr || !s_allocator)
         return;
     s_allocator->Deallocate(ptr);
 }

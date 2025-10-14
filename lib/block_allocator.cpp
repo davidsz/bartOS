@@ -78,6 +78,11 @@ void BlockAllocator::MarkBlocksTaken(size_t start_block, size_t total_blocks)
         entry |= HEAP_BLOCK_HAS_NEXT;
 
     for (size_t i = start_block; i <= end_block; i++) {
+#if 0
+        // Breakpoint for debugging of heap corruptions
+        if (m_tableStartAddress[i] & HEAP_BLOCK_TABLE_ENTRY_TAKEN)
+            return;
+#endif
         m_tableStartAddress[i] = entry;
         entry = HEAP_BLOCK_TABLE_ENTRY_TAKEN;
         if (i != end_block - 1)
@@ -88,6 +93,11 @@ void BlockAllocator::MarkBlocksTaken(size_t start_block, size_t total_blocks)
 void BlockAllocator::MarkBlocksFree(size_t start_block)
 {
     for (size_t i = start_block; i < m_tableSize; i++) {
+#if 0
+        // Breakpoint for debugging of heap corruptions
+        if (m_tableStartAddress[i] == HEAP_BLOCK_TABLE_ENTRY_FREE)
+            return;
+#endif
         BlockTableEntry entry = m_tableStartAddress[i];
         m_tableStartAddress[i] = HEAP_BLOCK_TABLE_ENTRY_FREE;
         if (!(entry & HEAP_BLOCK_HAS_NEXT))

@@ -76,7 +76,7 @@ void Task::ReturnToCurrent()
 void Task::ReturnToKernel()
 {
     change_data_segment(KERNEL_DATA_SELECTOR);
-    paging::switch_directory(kernel_page_directory());
+    paging::switch_directory(kernel::page_directory());
 }
 
 void Task::SaveCurrentState(core::Registers *frame)

@@ -29,15 +29,25 @@
 #error "This kernel needs to be compiled with a ix86-elf compiler"
 #endif
 
+namespace kernel {
+
 // Dummy __dso_handle implementation for freestanding environments
 extern "C" void *__dso_handle;
 void *__dso_handle = nullptr;
 
 // Describes the kernel page directory
 static paging::Directory s_kernelPageDirectory = 0;
-paging::Directory kernel_page_directory()
+paging::Directory page_directory()
 {
     return s_kernelPageDirectory;
+}
+
+void panic(const char *message)
+{
+    console::set_color(console::Color::Black, console::Color::White);
+    console::clear();
+    console::print(message);
+    while (true);
 }
 
 // extern "C": Using C-style linking keeps the function name unmodified;
@@ -138,3 +148,5 @@ extern "C" int kernel_main(unsigned int multiboot_magic, void *)
 
     return 0;
 }
+
+}; // namespace kernel

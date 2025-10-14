@@ -11,11 +11,12 @@ class Vector {
 public:
     explicit Vector();
     ~Vector();
+    // Copy
+    Vector(const Vector &other);
+    Vector<T> &operator=(Vector<T> &other);
+    // Move
     Vector(Vector &&other);
     Vector<T> &operator=(Vector<T> &&other);
-    // TODO
-    Vector(Vector &other) = delete;
-    Vector<T> &operator=(Vector<T> &other) = delete;
 
     T &front() const;
     T &back() const;
@@ -100,6 +101,31 @@ Vector<T>::Vector()
     , m_capacity(0)
 {
     reserve(16);
+}
+
+template <typename T>
+Vector<T>::Vector(const Vector &other)
+    : m_size(other.m_size)
+    , m_capacity(other.m_capacity)
+{
+    m_data = new T[m_capacity];
+    for (size_t i = 0; i < m_size; ++i)
+        m_data[i] = other.m_data[i];
+}
+
+template <typename T>
+Vector<T> &Vector<T>::operator=(Vector<T> &other)
+{
+    if (this != &other) {
+        delete[] m_data;
+        m_size = other.m_size;
+        m_capacity = other.m_capacity;
+        m_data = new T[m_capacity];
+        for (size_t i = 0; i < m_size; ++i) {
+            m_data[i] = other.m_data[i];
+        }
+    }
+    return *this;
 }
 
 template <typename T>
@@ -196,7 +222,7 @@ void Vector<T>::reserve(size_t capacity)
 {
     if (capacity <= m_capacity)
         return;
-    T *newData = (T *)calloc(sizeof(T) * capacity);
+    T *newData = new T[capacity];
     for (size_t i = 0; i < m_size; i++)
         newData[i] = move(m_data[i]);
     delete[] m_data;

@@ -3,6 +3,11 @@
 
 #include "paging/paging.h"
 
-paging::Directory kernel_page_directory();
+namespace kernel {
+
+paging::Directory page_directory();
+void panic(const char *message);
+
+}; // namespace kernel
 
 #endif // OS_KERNEL_H
