@@ -41,9 +41,7 @@ Binary *LoadFile(const String &filename)
     if (!result)
         result = Binary::FromLoaded(filename, program_data, stat.size);
 
-    // FIXME
-    // core::fclose(fd);
-
+    core::fclose(fd);
     return result;
 }
 

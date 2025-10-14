@@ -10,6 +10,15 @@ class Path {
 public:
     explicit Path();
     explicit Path(const char *path);
+
+    // TODO: Copy
+    Path(const Path &other) = delete;
+    Path &operator=(const Path &other) = delete;
+
+    // Move
+    Path(Path &&other);
+    Path &operator=(Path &&other);
+
     const String &data() const;
     bool valid() const;
     uint8_t driveLetter() const;

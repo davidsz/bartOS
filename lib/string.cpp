@@ -32,12 +32,12 @@ String::String(const String &str)
     memcpy(m_data, str.m_data, m_length + 1);
 }
 
-String::String(String &&str)
+String::String(String &&other)
+    : m_data(other.m_data)
+    , m_length(other.m_length)
 {
-    m_length = str.m_length;
-    str.m_length = 0;
-    m_data = str.m_data;
-    delete[] str.m_data;
+    other.m_data = nullptr;
+    other.m_length = 0;
 }
 
 String::~String()
@@ -120,14 +120,14 @@ String &String::operator=(const String &str)
     return *this;
 }
 
-String &String::operator=(String &&str)
+String &String::operator=(String &&other)
 {
-    if (this != &str) {
+    if (this != &other) {
         delete[] m_data;
-        m_length = str.m_length;
-        str.m_length = 0;
-        m_data = str.m_data;
-        delete[] str.m_data;
+        m_length = other.m_length;
+        other.m_length = 0;
+        m_data = other.m_data;
+        other.m_data = nullptr;
     }
     return *this;
 }

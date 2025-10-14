@@ -156,9 +156,8 @@ void Process::Terminate()
     for (auto it = m_allocations.begin(); it != m_allocations.end(); it++)
         Deallocate(it->ptr);
 
-    // FIXME
-    // delete m_binary;
-    //m_binary = 0;
+    delete m_binary;
+    m_binary = 0;
 
     free(m_stack);
     m_stack = 0;

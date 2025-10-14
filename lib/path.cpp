@@ -18,6 +18,31 @@ Path::Path(const char *path)
     else
         m_valid = true;
 }
+/*
+Path(const Path &other)
+{
+}
+
+Path &operator=(const Path &other)
+{
+}
+*/
+Path::Path(Path &&other)
+    : m_data(move(other.m_data))
+    , m_valid(move(other.m_valid))
+    , m_parts(move(other.m_parts))
+    , m_driveLetter(move(other.m_driveLetter))
+{
+}
+
+Path &Path::operator=(Path &&other)
+{
+    m_data = move(other.m_data);
+    m_valid = move(other.m_valid);
+    m_parts = move(other.m_parts);
+    m_driveLetter = move(other.m_driveLetter);
+    return *this;
+}
 
 int Path::Parse()
 {

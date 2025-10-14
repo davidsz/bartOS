@@ -70,7 +70,7 @@ struct FAT_Directory_Item {
 
 struct FAT_Directory {
     ~FAT_Directory() {
-        delete items;
+        free(items);
     }
 
     FAT_Directory_Item *items;
@@ -81,15 +81,13 @@ struct FAT_Directory {
 
 struct FAT_Item {
     ~FAT_Item() {
-        if (type == FAT_DIRECTORY_ITEM)
-            delete item;
-        else if (type == FAT_DIRECTORY)
+        if (type == FAT_DIRECTORY)
             delete directory;
     }
 
     union {
-        FAT_Directory_Item *item;
-        FAT_Directory *directory;
+        FAT_Directory_Item *item; // Referencing
+        FAT_Directory *directory; // Owning
     };
     enum Type {
         FAT_DIRECTORY_ITEM,
@@ -223,7 +221,6 @@ FAT_Directory *FAT16::LoadDirectory(disk::Disk *disk, const FAT_Directory_Item *
     directory->total = total_items;
 
     int directory_size = total_items * sizeof(FAT_Directory_Item);
-    // TODO: ownership
     directory->items = (FAT_Directory_Item *)calloc(directory_size);
     ReadInternal(disk, cluster, 0, directory_size, directory->items);
 
