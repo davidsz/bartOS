@@ -29,7 +29,7 @@ public:
 private:
     int m_tail = 0; // Position where we push chars
     int m_head = 0; // Position where we pop from
-    char m_buffer[KEYBOARD_BUFFER_SIZE];
+    char m_buffer[KEYBOARD_BUFFER_SIZE] = {0};
 };
 
 void init_all();
