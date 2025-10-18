@@ -69,7 +69,6 @@ void *run_kernel_command(uint32_t id, core::Registers *registers)
 
 void *kc_exec(core::Registers *)
 {
-    log::info("kc_exec\n");
     task::Task *current_task = task::Task::Current();
     void *user_space_str_addr = current_task->GetStackItem(0);
     char buf[1024];
@@ -137,8 +136,6 @@ void *kc_free(core::Registers *)
 void *kc_exit(core::Registers *)
 {
     task::Task::Current()->process()->Terminate();
-    // TODO
-    // task::switch_to_next();
     return 0;
 }
 

@@ -62,7 +62,6 @@ void Task::RunNext()
         log::error("Task::RunNext: No next Task available.\n");
         return;
     }
-    log::info("Task::RunNext: process %d\n", next->m_process->ID());
     next->ActivateAndRun();
 }
 
@@ -140,7 +139,7 @@ Task::~Task()
         if (this == *it) {
             s_tasks.erase(it);
             if (this == s_currentTask)
-                s_currentTask = Task::Next();
+                s_currentTask = nullptr;
             return;
         }
     }

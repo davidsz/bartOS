@@ -72,14 +72,12 @@ int Process::MapMemory()
 
 int Process::Load(const String &filename)
 {
-    log::info("Process::Load - 1\n");
     m_binary = loader::LoadFile(filename);
     if (!m_binary) {
         log::error("Process::Load: Failed to load file (%s)\n", filename);
         return Status::E_IO;
     }
 
-    log::info("Process::Load - 2\n");
     void *m_stack = calloc(PROGRAM_STACK_SIZE);
     if (!m_stack) {
         log::error("Process::Load: Failed to allocate memory for stack\n");
@@ -87,7 +85,6 @@ int Process::Load(const String &filename)
         return Status::E_NO_MEMORY;
     }
 
-    log::info("Process::Load - 3\n");
     m_task = Task::New(this);
     if (!m_task) {
         log::error("Process::Load: Failed to create task\n");
@@ -96,7 +93,6 @@ int Process::Load(const String &filename)
         return Status::E_NO_MEMORY;
     }
 
-    log::info("Process::Load - 4\n");
     if (int res = MapMemory()) {
         log::error("Process::Load: Failed to map memory (%d)\n", res);
         delete m_binary;
@@ -167,6 +163,7 @@ void Process::Terminate()
 
     m_terminated = true;
 
+    // TODO: Implement a scheduler and notify that instead of switching here
     if (this == s_currentProcess)
         SwitchToAny();
 }
