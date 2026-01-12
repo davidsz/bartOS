@@ -1,3 +1,5 @@
+![bartOS logo](bartos.png)
+
 # bartOS
 Das ist my hobby operating system project where I learn low level development. It contains a custom simple bootloader to have a glance at the early stage of the boot process; and an even more simpler libc implementation to be able to develop C programs on the top of these.
 
